@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build ParcelPanic",
+      "type": "shell",
+      "command": "${workspaceFolder}\\build.bat",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] }
+      },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Build ParcelPanic (Debug)",
+      "type": "shell",
+      "command": "${workspaceFolder}\\build.bat",
+      "args": ["Debug"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] }
+      },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Run ParcelPanic",
+      "type": "process",
+      "command": "${workspaceFolder}\\build\\ParcelPanic.exe",
+      "dependsOn": "Build ParcelPanic",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ]
+}

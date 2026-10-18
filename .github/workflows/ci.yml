@@ -1,0 +1,31 @@
+name: Windows build and tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Windows MinGW tools
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-make
+      - name: Add MinGW tools to the Windows PATH
+        shell: msys2 {0}
+        run: cygpath -w /ucrt64/bin >> "$GITHUB_PATH"
+      - name: Build and test with the same batch file used in VS Code
+        shell: cmd
+        run: build.bat
+      - name: Save the Windows game
+        uses: actions/upload-artifact@v4
+        with:
+          name: ParcelPanic-Windows-x64
+          path: build/ParcelPanic.exe
+          if-no-files-found: error

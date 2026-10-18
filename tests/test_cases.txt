@@ -1,0 +1,20 @@
+Portable C++ cases (test_main.cpp; checks remain active in Release):
+1. Queue: empty, one element, full, rejected overflow, wraparound, 1000 repeated cycles, clear, minimum capacity.
+2. Heap: empty extraction/peek, 1000 reverse inputs, sorted/stable equal-deadline extraction, capacity growth, clear.
+3. Hash: invalid/missing key, insert/find/update/delete, 1/8/15 collisions, tombstone chain, reuse, 900 additional records, lookup after rehash, clear.
+4. Stack: empty, push/pop, LIFO, clear and genuine junction restoration.
+5. Dispatch: correct staging, duplicate dock admission rejection, earliest-deadline order and tie order, loader pacing, combo scoring, wrong dock, no early dispatch.
+6. Deadline: exact boundary, expiry only once, expired staging skipped, express bonus applied only to active records.
+7. Layouts: all four levels, valid next edges, every destination from every input, hazard-free routes for fragile parcels.
+8. Generation: IDs, authoritative queued records, express/fragile types, bounded queue overflow without orphan records.
+9. Movement: emergency brake duration/cooldown, identity retention, conservative occupancy and no second move.
+10. Hazards: fragile crusher entry becomes terminal once and clears occupancy.
+11. Reset/navigation: clean restart, forward/backward/wrap, zero time/score/registry/heap/history/occupancy.
+12. Playthroughs: deterministic route solver wins all four levels; invariants checked after every tick; completed runs stop advancing.
+13. Termination: unattended configurations lose and terminate within the safety bound.
+14. Jam: persistent artificial obstruction triggers the configured loss condition.
+15. Demos: repeat all F1-F3 sequences twice, full rejection, wraparound, stable heap roots, collisions/tombstones/rehash and original hash capacity on reset.
+16. Rush/history: warning and active schedule, undo history ends at the simulation boundary.
+
+Manual local review:
+VS Code / MinGW build and play on Windows 11; monitor readability and contrast; long human play sessions; results/retry; physical keyboard layout; different Windows DPI settings; difficulty and reaction times. These manual checks are not claimed as executed by the cloud session.
