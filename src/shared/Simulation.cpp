@@ -66,14 +66,14 @@ bool Simulation::validate() const {
         if (++seen[id] != 1 || p->status != ParcelStatus::OnConveyor || p->cell != i) return false;
     }
     for (int i = 0; i < dispatch.ready.size(); ++i) {
-        int id = dispatch.ready.at(i).id; const Parcel* p = dispatch.registry.find(id);
+        int id = dispatch.ready.getEntry(i).id; const Parcel* p = dispatch.registry.find(id);
         if (!p || id < 1 || id > Config::MaxParcels) return false;
         if (terminal(p->status)) continue;
         if (p->status != ParcelStatus::Ready || ++seen[id] != 1) return false;
     }
     int delivered = 0, failed = 0;
-    for (int i = 0; i < dispatch.registry.capacity(); ++i) {
-        const Bucket& b = dispatch.registry.bucket(i);
+    for (int i = 0; i < dispatch.registry.getCapacity(); ++i) {
+        const Bucket& b = dispatch.registry.getBucket(i);
         if (b.state != BucketState::Occupied) continue;
         if (b.parcel.id < 1 || b.parcel.id > Config::MaxParcels) return false;
         if (b.parcel.status == ParcelStatus::Dispatched) ++delivered;

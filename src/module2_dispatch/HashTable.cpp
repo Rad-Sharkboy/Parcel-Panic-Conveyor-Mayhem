@@ -1,43 +1,157 @@
 #include "HashTable.h"
-HashTable::HashTable(int capacity) : buckets_(new Bucket[capacity < 3 ? 3 : capacity]), capacity_(capacity < 3 ? 3 : capacity) {}
-HashTable::~HashTable() { delete[] buckets_; }
-int HashTable::hash(int id) const { return id < 0 ? 0 : id % capacity_; }
-const Parcel* HashTable::find(int id) const {
-    if (id <= 0) return nullptr;
-    int start = hash(id);
-    for (int p = 0; p < capacity_; ++p) {
-        const Bucket& b = buckets_[(start + p) % capacity_];
-        if (b.state == BucketState::Empty) return nullptr;
-        if (b.state == BucketState::Occupied && b.parcel.id == id) return &b.parcel;
-    }
-    return nullptr;
-}
-Parcel* HashTable::find(int id) { return const_cast<Parcel*>(static_cast<const HashTable&>(*this).find(id)); }
-void HashTable::rehash(int capacity) {
-    Bucket* old = buckets_; int oldCapacity = capacity_;
-    buckets_ = new Bucket[capacity]; capacity_ = capacity; size_ = tombstones_ = 0;
-    for (int i = 0; i < oldCapacity; ++i) if (old[i].state == BucketState::Occupied) insert(old[i].parcel);
-    delete[] old;
-}
-bool HashTable::insert(const Parcel& parcel) {
-    if (parcel.id <= 0) return false;
-    Parcel* existing = find(parcel.id);
-    if (existing) { *existing = parcel; return true; }
-    if ((size_ + tombstones_ + 1) * 10 >= capacity_ * 7) rehash(capacity_ * 2 + 1);
-    int index = hash(parcel.id);
-    while (buckets_[index].state == BucketState::Occupied) index = (index + 1) % capacity_;
-    if (buckets_[index].state == BucketState::Tombstone) --tombstones_;
-    buckets_[index].parcel = parcel; buckets_[index].state = BucketState::Occupied; ++size_; return true;
-}
-bool HashTable::erase(int id) {
-    if (!find(id)) return false;
-    int index = hash(id);
-    while (!(buckets_[index].state == BucketState::Occupied && buckets_[index].parcel.id == id)) index = (index + 1) % capacity_;
-    buckets_[index].state = BucketState::Tombstone; --size_; ++tombstones_; return true;
-}
-void HashTable::clear() { for (int i = 0; i < capacity_; ++i) buckets_[i] = Bucket{}; size_ = tombstones_ = 0; }
 
-void HashTable::reset(int capacity) {
-    int count = capacity < 3 ? 3 : capacity; Bucket* fresh = new Bucket[count];
-    delete[] buckets_; buckets_ = fresh; capacity_ = count; size_ = tombstones_ = 0;
+HashTable::HashTable(int size) {
+    if (size < 3) {
+        size = 3;
+    }
+    capacity = size;
+    count = 0;
+    deletedCount = 0;
+    buckets = new Bucket[capacity];
+}
+
+HashTable::~HashTable() {
+    delete[] buckets;
+}
+
+HashTable::HashTable(const HashTable& other) {
+    capacity = other.capacity;
+    count = other.count;
+    deletedCount = other.deletedCount;
+    buckets = new Bucket[capacity];
+    for (int i = 0; i < capacity; i++) {
+        buckets[i] = other.buckets[i];
+    }
+}
+
+HashTable& HashTable::operator=(const HashTable& other) {
+    if (this == &other) {
+        return *this;
+    }
+    delete[] buckets;
+    capacity = other.capacity;
+    count = other.count;
+    deletedCount = other.deletedCount;
+    buckets = new Bucket[capacity];
+    for (int i = 0; i < capacity; i++) {
+        buckets[i] = other.buckets[i];
+    }
+    return *this;
+}
+
+int HashTable::hash(int id) const {
+    if (id < 0) {
+        return 0;
+    }
+    return id % capacity;
+}
+
+int HashTable::findIndex(int id) const {
+    if (id <= 0) {
+        return -1;
+    }
+    int index = hash(id);
+    for (int checked = 0; checked < capacity; checked++) {
+        if (buckets[index].state == BucketState::Empty) {
+            return -1;
+        }
+        if (buckets[index].state == BucketState::Occupied && buckets[index].parcel.id == id) {
+            return index;
+        }
+        index = (index + 1) % capacity; // Linear probing: try the next bucket.
+    }
+    return -1;
+}
+
+Parcel* HashTable::find(int id) {
+    int index = findIndex(id);
+    if (index == -1) {
+        return nullptr;
+    }
+    return &buckets[index].parcel;
+}
+
+// This version lets read-only drawing code look up a parcel without changing it.
+const Parcel* HashTable::find(int id) const {
+    int index = findIndex(id);
+    if (index == -1) {
+        return nullptr;
+    }
+    return &buckets[index].parcel;
+}
+
+void HashTable::rehash(int newCapacity) {
+    Bucket* oldBuckets = buckets;
+    int oldCapacity = capacity;
+    buckets = new Bucket[newCapacity];
+    capacity = newCapacity;
+    count = 0;
+    deletedCount = 0;
+
+    // Changing capacity changes id % capacity, so insert each live record again.
+    for (int i = 0; i < oldCapacity; i++) {
+        if (oldBuckets[i].state == BucketState::Occupied) {
+            insert(oldBuckets[i].parcel);
+        }
+    }
+    delete[] oldBuckets;
+}
+
+bool HashTable::insert(const Parcel& parcel) {
+    if (parcel.id <= 0) {
+        return false;
+    }
+    int existing = findIndex(parcel.id);
+    if (existing != -1) {
+        buckets[existing].parcel = parcel;
+        return true;
+    }
+
+    // Grow before 70% of slots are used/deleted, keeping probe chains short.
+    int usedSlots = count + deletedCount + 1;
+    if (usedSlots * 10 >= capacity * 7) {
+        rehash(capacity * 2 + 1);
+    }
+    int index = hash(parcel.id);
+    while (buckets[index].state == BucketState::Occupied) {
+        index = (index + 1) % capacity;
+    }
+    if (buckets[index].state == BucketState::Tombstone) {
+        deletedCount--;
+    }
+    buckets[index].parcel = parcel;
+    buckets[index].state = BucketState::Occupied;
+    count++;
+    return true;
+}
+
+bool HashTable::erase(int id) {
+    int index = findIndex(id);
+    if (index == -1) {
+        return false;
+    }
+    // An empty slot would hide later colliding IDs; a tombstone means 'keep looking'.
+    buckets[index].state = BucketState::Tombstone;
+    count--;
+    deletedCount++;
+    return true;
+}
+
+void HashTable::clear() {
+    for (int i = 0; i < capacity; i++) {
+        buckets[i] = Bucket();
+    }
+    count = 0;
+    deletedCount = 0;
+}
+
+void HashTable::reset(int size) {
+    if (size < 3) {
+        size = 3;
+    }
+    delete[] buckets;
+    capacity = size;
+    buckets = new Bucket[capacity];
+    count = 0;
+    deletedCount = 0;
 }

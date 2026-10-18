@@ -156,7 +156,7 @@ void Renderer::demonstration(const Game& g) {
         text("Fixed-capacity array. Enqueue and dequeue take O(1); indices wrap with modulo.", 90, 527, 19, Muted);
     } else if (d.mode == 2) {
         const MinHeap& heap = d.heap;
-        text(TextFormat("Size %i   /   Capacity %i   /   Earliest deadline first, then arrival order", heap.size(), heap.capacity()), 90, 218, 22);
+        text(TextFormat("Size %i   /   Capacity %i   /   Earliest deadline first, then arrival order", heap.size(), heap.getCapacity()), 90, 218, 22);
         for (int i = 0; i < heap.size(); ++i) {
             int depth = i < 1 ? 0 : i < 3 ? 1 : 2;
             int first = depth == 0 ? 0 : depth == 1 ? 1 : 3;
@@ -175,21 +175,21 @@ void Renderer::demonstration(const Game& g) {
                 DrawLineEx({p.x + dx * 34, p.y + dy * 34}, {x - dx * 34, y - dy * 34}, 2, Border);
             }
             DrawCircleV({x, y}, 33, i == 0 ? Color{44, 94, 98, 255} : Raised);
-            centered(TextFormat("#%i", heap.at(i).id), {x - 30, y - 25, 60, 28}, 20, White, true);
-            centered(TextFormat("d:%i", heap.at(i).deadline), {x - 30, y + 2, 60, 23}, 16, Gold);
+            centered(TextFormat("#%i", heap.getEntry(i).id), {x - 30, y - 25, 60, 28}, 20, White, true);
+            centered(TextFormat("d:%i", heap.getEntry(i).deadline), {x - 30, y + 2, 60, 23}, 16, Gold);
         }
         text("ACTUAL ARRAY", 791, 272, 15, Cyan, true);
         for (int i = 0; i < heap.size(); ++i) {
-            text(TextFormat("[%i]  #%i   deadline %i   seq %llu", i, heap.at(i).id, heap.at(i).deadline, heap.at(i).sequence), 791, 306 + i * 31.0f, 17, i == 0 ? Gold : White);
+            text(TextFormat("[%i]  #%i   deadline %i   seq %i", i, heap.getEntry(i).id, heap.getEntry(i).deadline, heap.getEntry(i).sequence), 791, 306 + i * 31.0f, 17, i == 0 ? Gold : White);
         }
         text("Only parcels at a matching dock enter the gameplay heap.", 90, 541, 18, Muted);
     } else {
         const HashTable& table = d.table;
-        text(TextFormat("hash(id) = id %% %i     Records %i     Linear probing with tombstones", table.capacity(), table.size()), 90, 219, 22);
-        int visible = std::min(table.capacity(), 15);
+        text(TextFormat("hash(id) = id %% %i     Records %i     Linear probing with tombstones", table.getCapacity(), table.size()), 90, 219, 22);
+        int visible = std::min(table.getCapacity(), 15);
         for (int i = 0; i < visible; ++i) {
             Rectangle slot{100 + (i / 5) * 365.0f, 269 + (i % 5) * 48.0f, 335, 39};
-            const Bucket& bucket = table.bucket(i);
+            const Bucket& bucket = table.getBucket(i);
             box(slot, bucket.state == BucketState::Occupied ? Raised : Background);
             text(TextFormat("[%02i]", i), slot.x + 12, slot.y + 8, 17, Muted);
             text(bucket.state == BucketState::Occupied ? TextFormat("#%i   home %i", bucket.parcel.id, table.hash(bucket.parcel.id)) : bucket.state == BucketState::Tombstone ? "Tombstone" : "Empty", slot.x + 80, slot.y + 8, 18, bucket.state == BucketState::Occupied ? Cyan : Muted);

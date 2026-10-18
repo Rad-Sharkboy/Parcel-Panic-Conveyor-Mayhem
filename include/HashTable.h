@@ -1,30 +1,44 @@
 #ifndef HASHTABLE_H
-#define HASHTABLE_H // Prevent this header being included twice in the same source file.
+#define HASHTABLE_H // Prevent duplicate declarations when headers include each other.
+
 #include "Parcel.h"
+
+// Named states: a removed bucket must not end a search through a collision chain.
 enum class BucketState { Empty, Occupied, Tombstone };
-struct Bucket { Parcel parcel; BucketState state = BucketState::Empty; };
+struct Bucket {
+    Parcel parcel;
+    BucketState state = BucketState::Empty;
+};
+
 class HashTable {
-    Bucket* buckets_; int size_ = 0, tombstones_ = 0, capacity_;
-    void rehash(int capacity);
+private:
+    Bucket* buckets;
+    int count;
+    int deletedCount;
+    int capacity;
+    int findIndex(int id) const;
+    void rehash(int newCapacity);
+
 public:
-    explicit HashTable(int capacity = Config::HashCapacity);
+    HashTable(int capacity = Config::HashCapacity);
     ~HashTable();
-    HashTable(const HashTable&) = delete;
-    HashTable& operator=(const HashTable&) = delete;
-    // Insert/update positive ID, expected O(1), O(n) rehash. False for invalid ID.
+    HashTable(const HashTable& other);
+    HashTable& operator=(const HashTable& other);
+
+    // Insert/update a positive ID; false for invalid IDs. Expected O(1), with rehash work if full.
     bool insert(const Parcel& parcel);
-    // Temporary pointer invalidated by rehash. Expected O(1), worst O(n).
+    // Return a record pointer, or nullptr if absent. Expected O(1), worst O(n).
+    // Inserting can resize the array: keep IDs, not these pointers, between operations.
     Parcel* find(int id);
     const Parcel* find(int id) const;
-    // Mark tombstone; false for absent ID. Expected O(1), worst O(n).
+    // Mark the matching bucket as deleted. False when absent. Expected O(1), worst O(n).
     bool erase(int id);
     void clear();
-    // Release all records and restore a chosen capacity, O(capacity).
     void reset(int capacity);
     int hash(int id) const;
-    int size() const { return size_; }
-    int capacity() const { return capacity_; }
-    const Bucket& bucket(int i) const { return buckets_[i]; }
+    int size() const { return count; }
+    int getCapacity() const { return capacity; }
+    const Bucket& getBucket(int index) const { return buckets[index]; }
 };
 
 #endif

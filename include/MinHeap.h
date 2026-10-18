@@ -1,24 +1,38 @@
 #ifndef MINHEAP_H
-#define MINHEAP_H // Prevent this header being included twice in the same source file.
+#define MINHEAP_H // Prevent duplicate declarations when headers include each other.
+
 #include "Config.h"
-struct HeapEntry { int id = 0; int deadline = 0; unsigned long long sequence = 0; };
+
+struct HeapEntry {
+    int id = 0;
+    int deadline = 0;
+    int sequence = 0; // Arrival number: breaks ties between equal deadlines.
+};
+
 class MinHeap {
-    HeapEntry* entries_; int size_ = 0, capacity_;
-    static bool before(const HeapEntry& a, const HeapEntry& b);
+private:
+    HeapEntry* heap;
+    int count;
+    int capacity;
+    bool comesBefore(HeapEntry first, HeapEntry second) const;
+
 public:
-    explicit MinHeap(int capacity = Config::HeapCapacity);
+    MinHeap(int capacity = Config::HeapCapacity);
     ~MinHeap();
-    MinHeap(const MinHeap&) = delete;
-    MinHeap& operator=(const MinHeap&) = delete;
-    // Insert deadline/sequence entry, O(log n); O(n) when array grows.
+    MinHeap(const MinHeap& other);
+    MinHeap& operator=(const MinHeap& other);
+
+    bool isEmpty() const;
+    // Add an entry and move it toward the root. O(log n), or O(n) if the array grows.
     void insert(HeapEntry entry);
-    // Extract earliest deadline, then earliest sequence. False if empty, O(log n).
+    // Remove the root. 'output' receives the entry; false means empty. O(log n).
     bool extract(HeapEntry& output);
+    // Read the root into 'output' without removing it. O(1).
     bool peek(HeapEntry& output) const;
-    void clear() { size_ = 0; }
-    int size() const { return size_; }
-    int capacity() const { return capacity_; }
-    const HeapEntry& at(int i) const { return entries_[i]; }
+    void clear();
+    int size() const { return count; }
+    int getCapacity() const { return capacity; }
+    const HeapEntry& getEntry(int index) const { return heap[index]; }
 };
 
 #endif

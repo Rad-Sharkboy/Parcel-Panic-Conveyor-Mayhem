@@ -172,8 +172,8 @@ void Renderer::factory(const Game& g) {
         centered(TextFormat("IN %i", i + 1), {p.x - 19, p.y - 40, 38, 18}, 12, Cyan, true);
         DrawLineEx({p.x - 19, p.y - 15}, {p.x - 19, p.y + 15}, 4, Cyan);
     }
-    for (int i = 0; i < s.dispatch.registry.capacity(); ++i) {
-        const Bucket& bucket = s.dispatch.registry.bucket(i);
+    for (int i = 0; i < s.dispatch.registry.getCapacity(); ++i) {
+        const Bucket& bucket = s.dispatch.registry.getBucket(i);
         if (bucket.state != BucketState::Occupied) continue;
         const Parcel& p = bucket.parcel;
         const ParcelMotion& m = g.motion[p.id];
@@ -240,7 +240,7 @@ void Renderer::dashboard(const Game& g) {
         text("Dispatch heap", 895, 370, 18, White, true);
         text(TextFormat("%i ready", s.dispatch.ready.size()), 1142, 370, 17, Cyan);
         text(hasRoot ? TextFormat("Next #%i / deadline %i", root.id, root.deadline) : "Waiting for a matching dock", 895, 395, 16, Muted);
-        text(TextFormat("Hash table   %i records / %i buckets", s.dispatch.registry.size(), s.dispatch.registry.capacity()), 895, 426, 16, Muted);
+        text(TextFormat("Hash table   %i records / %i buckets", s.dispatch.registry.size(), s.dispatch.registry.getCapacity()), 895, 426, 16, Muted);
         text(TextFormat("Undo stack   %i changes", conveyor.history.size()), 895, 450, 16, Gold);
     } else {
         const char* names[4] = {"Red shipping", "Blue shipping", "Yellow shipping", "Recycling / damaged"};

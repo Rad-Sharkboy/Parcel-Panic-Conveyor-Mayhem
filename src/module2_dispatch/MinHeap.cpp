@@ -1,30 +1,119 @@
 #include "MinHeap.h"
-#include <utility>
-MinHeap::MinHeap(int capacity) : entries_(new HeapEntry[capacity > 0 ? capacity : 1]), capacity_(capacity > 0 ? capacity : 1) {}
-MinHeap::~MinHeap() { delete[] entries_; }
-bool MinHeap::before(const HeapEntry& a, const HeapEntry& b) {
-    return a.deadline < b.deadline || (a.deadline == b.deadline && a.sequence < b.sequence);
-}
-void MinHeap::insert(HeapEntry entry) {
-    if (size_ == capacity_) {
-        int nextCapacity = capacity_ * 2;
-        HeapEntry* next = new HeapEntry[nextCapacity];
-        for (int i = 0; i < size_; ++i) next[i] = entries_[i];
-        delete[] entries_; entries_ = next; capacity_ = nextCapacity;
+
+MinHeap::MinHeap(int size) {
+    if (size < 1) {
+        size = 1;
     }
-    int i = size_++; entries_[i] = entry;
-    while (i > 0) { int parent = (i - 1) / 2; if (!before(entries_[i], entries_[parent])) break; std::swap(entries_[i], entries_[parent]); i = parent; }
+    capacity = size;
+    count = 0;
+    heap = new HeapEntry[capacity];
 }
+
+MinHeap::~MinHeap() {
+    delete[] heap;
+}
+
+MinHeap::MinHeap(const MinHeap& other) {
+    capacity = other.capacity;
+    count = other.count;
+    heap = new HeapEntry[capacity];
+    for (int i = 0; i < count; i++) {
+        heap[i] = other.heap[i];
+    }
+}
+
+MinHeap& MinHeap::operator=(const MinHeap& other) {
+    if (this == &other) {
+        return *this;
+    }
+    delete[] heap;
+    capacity = other.capacity;
+    count = other.count;
+    heap = new HeapEntry[capacity];
+    for (int i = 0; i < count; i++) {
+        heap[i] = other.heap[i];
+    }
+    return *this;
+}
+
+bool MinHeap::isEmpty() const {
+    return count == 0;
+}
+
+bool MinHeap::comesBefore(HeapEntry first, HeapEntry second) const {
+    if (first.deadline == second.deadline) {
+        return first.sequence < second.sequence;
+    }
+    return first.deadline < second.deadline;
+}
+
+void MinHeap::insert(HeapEntry entry) {
+    if (count == capacity) {
+        int newCapacity = capacity * 2;
+        HeapEntry* temp = new HeapEntry[newCapacity];
+        for (int i = 0; i < count; i++) {
+            temp[i] = heap[i];
+        }
+        delete[] heap;
+        heap = temp;
+        capacity = newCapacity;
+    }
+
+    int index = count;
+    heap[index] = entry;
+    count++;
+
+    // In an array heap, the parent of index i is (i - 1) / 2.
+    while (index > 0) {
+        int parent = (index - 1) / 2;
+        if (!comesBefore(heap[index], heap[parent])) {
+            break;
+        }
+        HeapEntry temp = heap[index];
+        heap[index] = heap[parent];
+        heap[parent] = temp;
+        index = parent;
+    }
+}
+
 bool MinHeap::extract(HeapEntry& output) {
-    if (!size_) return false;
-    output = entries_[0]; entries_[0] = entries_[--size_]; int i = 0;
+    if (isEmpty()) {
+        return false;
+    }
+    output = heap[0];
+    count--;
+    heap[0] = heap[count]; // Put the last item at the root, then move it down.
+    int index = 0;
+
     while (true) {
-        int child = i * 2 + 1;
-        if (child >= size_) break;
-        if (child + 1 < size_ && before(entries_[child + 1], entries_[child])) ++child;
-        if (!before(entries_[child], entries_[i])) break;
-        std::swap(entries_[child], entries_[i]); i = child;
+        int left = 2 * index + 1;
+        int right = 2 * index + 2;
+        if (left >= count) {
+            break; // No children: this entry is already in place.
+        }
+        int smaller = left;
+        if (right < count && comesBefore(heap[right], heap[left])) {
+            smaller = right;
+        }
+        if (!comesBefore(heap[smaller], heap[index])) {
+            break;
+        }
+        HeapEntry temp = heap[index];
+        heap[index] = heap[smaller];
+        heap[smaller] = temp;
+        index = smaller;
     }
     return true;
 }
-bool MinHeap::peek(HeapEntry& output) const { if (!size_) return false; output = entries_[0]; return true; }
+
+bool MinHeap::peek(HeapEntry& output) const {
+    if (isEmpty()) {
+        return false;
+    }
+    output = heap[0];
+    return true;
+}
+
+void MinHeap::clear() {
+    count = 0;
+}

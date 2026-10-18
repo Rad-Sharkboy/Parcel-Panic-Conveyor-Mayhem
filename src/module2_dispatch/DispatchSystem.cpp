@@ -2,7 +2,7 @@
 #include <algorithm>
 int DispatchSystem::multiplier() const { return std::min(Config::MaxMultiplier, 1 + streak / Config::ComboStep); }
 void DispatchSystem::reset() {
-    registry.clear(); ready.clear(); sequence_ = 0; nextLoad_ = 0;
+    registry.clear(); ready.clear(); nextSequence = 0; nextLoadTick = 0;
     score = streak = delivered = failed = 0; lastEventTick = -100; lastEventId = lastPoints = 0;
 }
 void DispatchSystem::fail(int id, ParcelStatus reason, int tick) {
@@ -20,14 +20,14 @@ void DispatchSystem::arrive(int id, Destination dock, int tick) {
     p->eventCell = p->cell;
     p->status = ParcelStatus::AtDock; p->cell = -1;
     if (p->destination != dock) { fail(id, ParcelStatus::Rejected, tick); return; }
-    p->status = ParcelStatus::Ready; ready.insert({id, p->deadline, sequence_++});
+    p->status = ParcelStatus::Ready; ready.insert({id, p->deadline, nextSequence++});
 }
 void DispatchSystem::update(int tick, int interval) {
-    for (int i = 0; i < registry.capacity(); ++i) {
-        const Bucket& b = registry.bucket(i);
+    for (int i = 0; i < registry.getCapacity(); ++i) {
+        const Bucket& b = registry.getBucket(i);
         if (b.state == BucketState::Occupied && !terminal(b.parcel.status) && tick > b.parcel.deadline) fail(b.parcel.id, ParcelStatus::Expired, tick);
     }
-    if (tick < nextLoad_) return;
+    if (tick < nextLoadTick) return;
     HeapEntry entry;
     while (ready.extract(entry)) {
         Parcel* p = registry.find(entry.id);
@@ -36,11 +36,11 @@ void DispatchSystem::update(int tick, int interval) {
         lastPoints = (p->kind == ParcelKind::Damaged ? Config::RecyclePoints : Config::BasePoints) * multiplier();
         p->pointsAwarded = lastPoints;
         score += lastPoints; lastEventTick = tick; lastEventId = p->id;
-        nextLoad_ = tick + interval;
+        nextLoadTick = tick + interval;
         // An express dispatch gives queued/active parcels a small deadline extension.
         if (p->kind == ParcelKind::Express) {
-            for (int i = 0; i < registry.capacity(); ++i) {
-                const Bucket& b = registry.bucket(i);
+            for (int i = 0; i < registry.getCapacity(); ++i) {
+                const Bucket& b = registry.getBucket(i);
                 if (b.state == BucketState::Occupied && (b.parcel.status == ParcelStatus::Queued || b.parcel.status == ParcelStatus::OnConveyor)) registry.find(b.parcel.id)->deadline += Config::ExpressBonusTicks;
             }
         }

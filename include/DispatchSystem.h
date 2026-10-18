@@ -3,8 +3,8 @@
 #include "HashTable.h"
 #include "MinHeap.h"
 class DispatchSystem {
-    unsigned long long sequence_ = 0;
-    int nextLoad_ = 0;
+    int nextSequence = 0;
+    int nextLoadTick = 0;
 public:
     HashTable registry;
     MinHeap ready;

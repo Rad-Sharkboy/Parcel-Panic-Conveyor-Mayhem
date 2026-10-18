@@ -130,8 +130,8 @@ void Game::deliveryEffect(const Parcel& parcel) {
 }
 void Game::syncParcels() {
     const HashTable& registry = simulation.dispatch.registry;
-    for (int i = 0; i < registry.capacity(); ++i) {
-        const Bucket& bucket = registry.bucket(i);
+    for (int i = 0; i < registry.getCapacity(); ++i) {
+        const Bucket& bucket = registry.getBucket(i);
         if (bucket.state != BucketState::Occupied) continue;
         const Parcel& parcel = bucket.parcel;
         ParcelMotion& m = motion[parcel.id];
@@ -250,7 +250,7 @@ bool Game::run(int smokeFrames, const char* screenshot, const char* stateFile) {
                   << ",\"brakeReady\":" << simulation.conveyor.brakeReady
                   << ",\"junctionChoice\":" << simulation.conveyor.layout.cells[simulation.conveyor.layout.junctions[0]].choice
                   << ",\"queueSize\":" << demos.queue.size() << ",\"heapSize\":" << demos.heap.size()
-                  << ",\"hashCapacity\":" << demos.table.capacity() << ",\"fontsReady\":" << Ui::fontsReady()
+                  << ",\"hashCapacity\":" << demos.table.getCapacity() << ",\"fontsReady\":" << Ui::fontsReady()
                   << ",\"beltClock\":" << beltClock
                   << ",\"parcelX\":" << motion[1].position.x << ",\"parcelY\":" << motion[1].position.y
                   << ",\"junctionAngle\":" << junctionAngle[simulation.conveyor.layout.junctions[0]] << "}\n";

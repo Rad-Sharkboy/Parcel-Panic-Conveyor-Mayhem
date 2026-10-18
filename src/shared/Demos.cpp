@@ -16,7 +16,7 @@ void Demos::advance() {
     } else if (mode == 2) {
         const int deadlines[6] = {90, 30, 60, 30, 10, 50};
         if (step < 6) {
-            heap.insert({201 + step, deadlines[step], static_cast<unsigned long long>(step)});
+            heap.insert({201 + step, deadlines[step], step});
             event = "insert #" + std::to_string(201 + step) + ": sift up; ties use sequence";
         } else {
             HeapEntry e;
