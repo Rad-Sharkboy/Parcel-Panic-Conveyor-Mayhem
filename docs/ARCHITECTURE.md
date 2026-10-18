@@ -6,7 +6,7 @@
 
 **Parcel Tracking and Dispatch** (`src/module2_dispatch`) contains the open-addressed hash registry, stable binary deadline heap and shared-loader system. It owns record lifecycle, one-time failure penalties, combo scoring and dispatch pacing.
 
-**Shared Game and Presentation** (`src/shared`, `src/main.cpp`) defines four handcrafted graphs embedded in a grid, the deterministic simulation coordinator, isolated demonstration sequences and the Raylib application. `Game` owns input and fixed-step timing; `Renderer` reads state. Neither the tests nor `parcel_core` link Raylib.
+**Shared Game and Presentation** (`src/shared`, `src/main.cpp`) defines four handcrafted graphs embedded in a grid, the deterministic simulation coordinator, isolated demonstration sequences and the Raylib application. `Game` owns input and fixed-step timing; `Renderer` reads state. `parcel_core` does not link Raylib.
 
 ## Data flow
 

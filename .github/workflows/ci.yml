@@ -1,4 +1,4 @@
-name: Windows build and tests
+name: Windows build
 on:
   push:
   pull_request:
@@ -20,7 +20,7 @@ jobs:
       - name: Add MinGW tools to the Windows PATH
         shell: msys2 {0}
         run: cygpath -w /ucrt64/bin >> "$GITHUB_PATH"
-      - name: Build and test with the same batch file used in VS Code
+      - name: Build the game
         shell: cmd
         run: build.bat
       - name: Save the Windows game

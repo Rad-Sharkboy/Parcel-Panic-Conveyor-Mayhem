@@ -25,7 +25,7 @@ IDs survive registry rehashing; raw parcel pointers do not. Queues own no parcel
 
 ## Inspection and validation helpers
 
-`HashTable::reset(int capacity)` releases records and restores a minimum capacity of three; the F3 demo uses it to return to seven buckets after a rehash. `Demos::open(int mode)` resets isolated actual instances; `advance()` performs one real operation and records its result. Demos link into `parcel_core` and are tested without Raylib.
+`HashTable::reset(int capacity)` releases records and restores a minimum capacity of three; the F3 demo uses it to return to seven buckets after a rehash. `Demos::open(int mode)` resets isolated actual instances; `advance()` performs one real operation and records its result. Demos link into `parcel_core` independently of Raylib.
 
 `Simulation::validate() const` checks registry size versus generation, active membership exactly once across queues/cells/heap, matching locations/statuses, and actual terminal counts versus scoring counters. Terminal stale references are allowed until cleanup. It returns a boolean and mutates no state.
 

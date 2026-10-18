@@ -4,7 +4,7 @@
 **Language and framework:** C++17, Raylib 5.5, CMake
 **Development environment:** Windows 11, VS Code and MinGW-w64
 **Repository:** Rad-Sharkboy/PARCEL-PANIC-CONVEYOR-MAYHEM
-**Status:** implemented prototype with verified cloud builds and automated tests; local Windows/human evaluation remains outstanding.
+**Status:** implemented prototype with verified builds; local Windows/human evaluation remains outstanding.
 
 ## 1. Abstract
 
@@ -56,13 +56,11 @@ The player can switch junctions with the left mouse button, brake a cell with th
 
 F1–F3 open isolated repeatable instances of the actual custom structures. Enter performs one operation; Backspace resets. The queue demo exposes physical array slots and front/rear wraparound. The heap demo displays the real array and tree, including stable deadline ties and extraction restructuring. The hash demo deliberately collides IDs 1, 8 and 15, performs successful/missing searches, creates/reuses a tombstone and triggers rehashing. These demonstrations hold the live simulation rather than corrupting it. The live dashboard separately reads the real game structures.
 
-## 6. Validation and observed outcomes
+## 6. Build and runtime verification
 
-The C++ runner uses explicit pass/fail checks rather than assertions that disappear in Release. Sixteen named groups execute 6,938 checks, covering empty/full operations, wraparound, repeated queue cycles, 1,000 heap entries, stable ties, collisions, duplicate updates, tombstones, rehash lookup, LIFO undo, routing, braking, deadlines, scoring, resets, level navigation, rushes, jams and termination. A route solver selects only legal junction exits and checks identity/location invariants every tick. It won all four levels: 20/20, 38/38, 48/48 and 51/60 deliveries respectively. The nine final-level failures were deadline expirations under that solver, not missing or duplicated records. Its result satisfies the quota and illustrates that success does not require perfect play.
+The graphical game compiled and rendered with Raylib 5.5 in the cloud. A separate MinGW-w64 cross-build produced a 64-bit Windows game executable with only Windows system DLL imports. This confirms Windows-target compilation and linking; the executable still needs native Windows 11 play verification.
 
-Debug and Release headless builds passed, and AddressSanitizer/UndefinedBehaviorSanitizer with leak detection reported no failures in the exercised core paths. The graphical target compiled and rendered with Raylib 5.5 on an Xvfb virtual display using Mesa llvmpipe OpenGL. A separate X11 integration test sent real keyboard and mouse events and verified 26 observed state outcomes, including level navigation/wrapping, pause, switching/undo, braking and actual demonstration mutations.
-
-A separate MinGW-w64 cross-build also produced a 64-bit Windows game EXE with only Windows system DLL imports. The executable has not been run natively on Windows. These runtime results establish behavior for the tested cloud environment. They do not prove gameplay quality across all human strategies or compatibility with every GPU. Native Windows execution and physical-monitor play were not available in this session. A simple MinGW batch build, VS Code configuration and Windows CI job are provided for that next validation stage; hosted CI has not been run by this delivery.
+The Windows workflow builds the same project through `build.bat`. Native Windows execution, VS Code/GDB integration, display scaling and human difficulty evaluation remain part of local review. Hosted CI results should be read from the actual workflow run.
 
 ## 7. Limitations and future evaluation
 
@@ -72,4 +70,4 @@ The next evaluation should ask students unfamiliar with the layout to play each 
 
 ## 8. Supporting material
 
-Implementation contracts: [INTERFACES](INTERFACES.md). Data flow: [ARCHITECTURE](ARCHITECTURE.md). Complexity: [COMPLEXITY](COMPLEXITY.md). Reproducible checks: [TESTING](TESTING.md). Intended team plan: [TEAM_PLAN](TEAM_PLAN.md). Official dependency references: [Raylib 5.5](https://github.com/raysan5/raylib/releases/tag/5.5), [CMake](https://cmake.org/documentation/), and [MSYS2/MinGW](https://www.msys2.org/).
+Implementation contracts: [INTERFACES](INTERFACES.md). Data flow: [ARCHITECTURE](ARCHITECTURE.md). Complexity: [COMPLEXITY](COMPLEXITY.md). Intended team plan: [TEAM_PLAN](TEAM_PLAN.md). Official dependency references: [Raylib 5.5](https://github.com/raysan5/raylib/releases/tag/5.5), [CMake](https://cmake.org/documentation/), and [MSYS2/MinGW](https://www.msys2.org/).

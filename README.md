@@ -2,7 +2,7 @@
 
 **Route parcels. Beat deadlines. Keep the factory moving.**
 
-A C++17/Raylib arcade game and university DSA project, developed for **Windows 11 using VS Code and MinGW-w64**.
+Parcel Panic: Conveyor Mayhem is a **C++17 and Raylib arcade game** built as a university Data Structures and Algorithms project. It runs on **Windows 11** and is developed using **VS Code and MinGW-w64**.
 
 Switch conveyor junctions to send parcels to matching delivery docks. Build combos, avoid jams, protect fragile freight, and survive increasingly busy shifts.
 
@@ -26,6 +26,16 @@ Switch conveyor junctions to send parcels to matching delivery docks. Build comb
 | Linked stack | Singly linked nodes | Undo paused junction changes |
 
 These structures are implemented from scratch, with destructors and copying disabled. No STL containers replace them. Queue operations and stack push/pop are O(1); heap operations are O(log n), with O(n) growth; hash lookup is expected O(1), worst O(n). Full details are in [COMPLEXITY.md](docs/COMPLEXITY.md).
+
+## 🧩 Modular design
+
+The game is split into three modules, with each part responsible for a different side of the factory:
+
+- **Conveyor and routing:** handles belt movement, junction switching, input queues, emergency brakes and stack-based undo.
+- **Parcel tracking and dispatch:** manages the hash-table registry, parcel status, deadlines, heap-based loading and scoring.
+- **Game and presentation:** brings the modules together through the game loop, four level layouts, menus, controls, animations and DSA demonstrations.
+
+The simulation works independently of Raylib rendering. Visual changes can be made without rewriting dispatch logic, and conveyor rules can be refined without rebuilding the menu system. Shared parcel definitions keep the modules consistent, while `include/Config.h` keeps gameplay tuning in one place.
 
 ## ⚙️ What you need — Windows
 
@@ -68,7 +78,7 @@ Press **Ctrl+Shift+B**, or run this in the VS Code terminal:
 .\build.bat
 ```
 
-The script downloads Raylib on the first build, compiles the entire project, and runs the automated tests. Wait for **“Build and tests passed.”**
+The script downloads Raylib on the first build and compiles the game. Wait for **“Build complete.”**
 
 ### 3. Play
 
@@ -108,3 +118,7 @@ F4 wraps from level 4 to level 1. Shift+F4 wraps backward. Skipping resets the r
 | Mayhem Mode | Vertical sorter, all parcel types and a slower loader | 60 | 36 | 3,600 |
 
 Match parcel letters to docks: **R**, **B**, **Y**, and **X** for damaged/recycling. **F** means fragile; **!** means express. Reach both the quota and score target. Wrong docks, missed deadlines and broken fragile parcels break your combo. A full jam meter ends the shift.
+
+---
+
+*Made by me and Sabtain.*

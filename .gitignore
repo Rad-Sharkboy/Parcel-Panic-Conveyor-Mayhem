@@ -4,7 +4,6 @@
 /.cache/
 CMakeCache.txt
 CMakeFiles/
-Testing/
 _deps/
 # Editor-local files (shared .vscode settings are included)
 .vs/
