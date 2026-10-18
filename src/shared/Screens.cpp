@@ -168,8 +168,10 @@ void Renderer::demonstration(const Game& g) {
          : d.mode == 2 ? "Deadline min-heap"
                        : "Open-address hash table",
          90, 96, 34);
-    text("Enter  Next operation     Backspace  Reset     Esc  Close", 90, 150, 20, Cyan);
-    text("Game paused", 1043, 153, 16, Muted);
+    button("Next operation / Enter", DemoNext, true);
+    button("Reset / Backspace", DemoReset);
+    button("Close / Esc", DemoClose);
+    text("Practice data / game paused", 990, 155, 16, Muted);
     DrawLine(90, 190, 1188, 190, Border);
     if (d.mode == 1) {
         const CircularQueue& queue = d.queue;
@@ -189,13 +191,20 @@ void Renderer::demonstration(const Game& g) {
                 centered("REAR", {slot.x, 462, slot.width, 24}, 16, Gold, true);
             }
         }
-        text("Fixed-capacity array. Enqueue and dequeue take O(1); indices wrap with modulo.", 90, 527, 19,
+        if (queue.isEmpty()) {
+            text("Queue empty. Click Next operation to run the next step.", 100, 494, 18, Cyan);
+        }
+        text("Fixed-capacity array. Enqueue and dequeue take O(1); indices wrap with modulo.", 90, 533, 19,
              Muted);
     } else if (d.mode == 2) {
         const MinHeap& heap = d.heap;
         text(TextFormat("Size %i   /   Capacity %i   /   Earliest deadline first, then arrival order",
                         heap.size(), heap.getCapacity()),
              90, 218, 22);
+        if (heap.isEmpty()) {
+            text("Heap empty.", 190, 330, 26, Cyan);
+            text("Click Next operation to run the next step.", 190, 373, 20, Muted);
+        }
         for (int i = 0; i < heap.size(); ++i) {
             int depth = i < 1 ? 0 : i < 3 ? 1 : 2;
             int first = depth == 0 ? 0 : depth == 1 ? 1 : 3;

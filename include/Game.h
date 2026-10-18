@@ -38,6 +38,7 @@ public:
     float accumulator = 0, clock = 0, beltClock = 0, titleTimer = 0, comboTimer = 0;
     int comboShown = 1;
     int selectedLevel = 0;
+    int inspectedLane = 0;
     int hoverCell = -1;
     float junctionPulse[Config::Cells]{};
     float junctionAngle[Config::Cells]{};

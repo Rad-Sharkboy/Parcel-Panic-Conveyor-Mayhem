@@ -1,16 +1,26 @@
 #ifndef DEMOS_H
-#define DEMOS_H // Prevent this header being included twice in the same source file.
+#define DEMOS_H // Prevent duplicate declarations when headers include each other.
+
 #include "CircularQueue.h"
 #include "MinHeap.h"
 #include "HashTable.h"
-#include <string> // Text messages, number-to-text conversion and font file paths.
+#include <string> // Stores the operation message; to_string turns an ID into display text.
+
 class Demos {
+private:
+    void queueStep();
+    void heapStep();
+    void hashStep();
+
 public:
-    int mode = 0, step = 0;
-    CircularQueue queue{Config::DemoCapacity};
-    MinHeap heap{2};
-    HashTable table{7};
+    int mode;
+    int step;
+    CircularQueue queue;
+    MinHeap heap;
+    HashTable table;
     std::string event;
+
+    Demos();
     void open(int which);
     void advance();
 };

@@ -9,6 +9,7 @@ Game::Game() {
 void Game::start(int level) {
     simulation.load(level);
     selectedLevel = simulation.level;
+    inspectedLane = 0;
     screen = Screen::Playing;
     paused = false;
     demos.mode = 0;
@@ -59,11 +60,11 @@ void Game::input() {
         }
     }
     if (demos.mode) {
-        if (IsKeyPressed(KEY_ESCAPE)) {
+        if (IsKeyPressed(KEY_ESCAPE) || Ui::clicked(Ui::DemoClose)) {
             demos.mode = 0;
-        } else if (IsKeyPressed(KEY_BACKSPACE)) {
+        } else if (IsKeyPressed(KEY_BACKSPACE) || Ui::clicked(Ui::DemoReset)) {
             demos.open(demos.mode);
-        } else if (IsKeyPressed(KEY_ENTER)) {
+        } else if (IsKeyPressed(KEY_ENTER) || Ui::clicked(Ui::DemoNext)) {
             demos.advance();
         }
         return;
@@ -110,6 +111,9 @@ void Game::input() {
             screen = Screen::Menu;
         }
         return;
+    }
+    if (hud && (IsKeyPressed(KEY_Q) || Ui::clicked(Ui::QueueLane))) {
+        inspectedLane = (inspectedLane + 1) % simulation.conveyor.layout.inputCount;
     }
     if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
         paused = !paused;

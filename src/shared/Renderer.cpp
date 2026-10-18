@@ -284,7 +284,7 @@ void Renderer::dashboard(const Game& g) {
     const ConveyorSystem& conveyor = s.conveyor;
     box({875, 136, 365, 536}, Panel, 0.06f);
     text(g.hud ? "Live structures" : "Routing guide", 895, 155, 24);
-    text(g.hud ? "H  Hide DSA details" : "H  Show DSA details", 895, 190, 16, Muted);
+    text(g.hud ? "H  Hide details     Q  Change input" : "H  Show DSA details", 895, 190, 16, Muted);
     int cooldown = conveyor.brakeReady - s.tick;
     if (cooldown < 0) {
         cooldown = 0;
@@ -295,8 +295,8 @@ void Renderer::dashboard(const Game& g) {
          915, 220, 17, cooldown ? Gold : Cyan);
     DrawLine(895, 252, 1219, 252, Border);
     if (g.hud) {
-        const CircularQueue& queue = conveyor.inputs[0];
-        text("Input queue 1", 895, 265, 18, White, true);
+        const CircularQueue& queue = conveyor.inputs[g.inspectedLane];
+        text(TextFormat("Input queue %i  / click to change", g.inspectedLane + 1), 895, 265, 16, White, true);
         text(TextFormat("%i / %i", queue.size(), queue.getCapacity()), 1172, 265, 18, Cyan);
         float slotWidth = 324.0f / queue.getCapacity();
         for (int i = 0; i < queue.getCapacity(); ++i) {
@@ -310,17 +310,23 @@ void Renderer::dashboard(const Game& g) {
         }
         text(TextFormat("Front %i   Rear %i   (last insert)", queue.getFront(), queue.getRear()), 895, 338,
              15, Muted);
+        if (queue.isEmpty()) {
+            text("Empty: no parcels waiting at this input.", 895, 355, 14, Muted);
+        }
         HeapEntry root;
         bool hasRoot = s.dispatch.ready.peek(root);
         text("Dispatch heap", 895, 370, 18, White, true);
         text(TextFormat("%i ready", s.dispatch.ready.size()), 1142, 370, 17, Cyan);
         text(hasRoot ? TextFormat("Next #%i / deadline %i", root.id, root.deadline)
-                     : "Waiting for a matching dock",
-             895, 395, 16, Muted);
+                     : "Empty: no dock parcels waiting to load.",
+             895, 395, 15, Muted);
         text(TextFormat("Hash table   %i records / %i buckets", s.dispatch.registry.size(),
                         s.dispatch.registry.getCapacity()),
              895, 426, 16, Muted);
-        text(TextFormat("Undo stack   %i changes", conveyor.history.size()), 895, 450, 16, Gold);
+        text(conveyor.history.isEmpty()
+                 ? "Undo stack  0 / pause, then click a switch"
+                 : TextFormat("Undo stack   %i changes / Z to undo", conveyor.history.size()),
+             895, 450, 15, Gold);
     } else {
         const char* names[4] = {"Red shipping", "Blue shipping", "Yellow shipping", "Recycling / damaged"};
         for (int i = 0; i < 4; ++i) {
