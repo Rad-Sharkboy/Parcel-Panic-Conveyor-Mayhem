@@ -25,7 +25,7 @@ Switch conveyor junctions to send parcels to matching delivery docks. Build comb
 | Hash table | Linear probing, tombstones and rehashing | Parcel tracking by unique ID |
 | Linked stack | Singly linked nodes | Undo paused junction changes |
 
-These structures are implemented from scratch, with destructors and copying disabled. No STL containers replace them. Queue operations and stack push/pop are O(1); heap operations are O(log n), with O(n) growth; hash lookup is expected O(1), worst O(n). Full details are in [COMPLEXITY.md](docs/COMPLEXITY.md).
+These structures are implemented from scratch with ordinary arrays, linked nodes, destructors and deep copies. No STL containers replace them. Queue operations and stack push/pop are O(1); heap operations are O(log n), with O(n) growth; hash lookup is expected O(1), worst O(n). Full details are in [COMPLEXITY.md](docs/COMPLEXITY.md). The [code guide](docs/CODE_GUIDE.md) explains the class examples, every include and the less familiar C++ syntax.
 
 ## 🧩 Modular design
 
@@ -103,12 +103,15 @@ After changing a `.cpp` or `.h` file, save it and press **Ctrl+Shift+B** again. 
 | Space / Esc | Pause/resume planning |
 | Z while paused | Undo a junction change |
 | H | Show/hide the live DSA panel |
+| Q / click the input queue heading | Inspect the next live input queue |
 | R / F5 | Restart the level |
 | F1 / F2 / F3 | Open queue / heap / hash demonstrations |
 | Enter / Backspace / Esc in a demo | Next operation / reset / close |
 | F4 / Shift+F4 | Next / previous level immediately |
 
 F4 wraps from level 4 to level 1. Shift+F4 wraps backward. Skipping resets the run and awards no victory. You can also choose any level from the title screen.
+
+The F1–F3 practice demos start empty. Click **Next operation** or press **Enter** to insert, remove and inspect items; **Reset** starts the sequence again. The live panel shows waiting parcels: an empty input queue means nothing is waiting at that input, and an empty heap means nothing is waiting at the loader. Pause and click a junction to put a change on the undo stack.
 
 ## 🏭 Four levels
 

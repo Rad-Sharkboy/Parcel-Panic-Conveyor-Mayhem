@@ -3,7 +3,7 @@
 **Project type:** undergraduate BSCS data structures semester prototype
 **Language and framework:** C++17, Raylib 5.5, CMake
 **Development environment:** Windows 11, VS Code and MinGW-w64
-**Repository:** Rad-Sharkboy/PARCEL-PANIC-CONVEYOR-MAYHEM
+**Repository:** Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem
 **Status:** implemented prototype with verified builds; local Windows/human evaluation remains outstanding.
 
 ## 1. Abstract
@@ -22,7 +22,7 @@ The shipped game therefore imposes explicit rules. A cell contains at most one a
 
 ### Circular queue
 
-Each input uses a manually allocated integer array with front, rear, size and capacity fields. Rear identifies the next insertion position. Enqueue and dequeue update their indices modulo capacity and reject full/empty operations without modifying the queue. This bounded design is appropriate because an input machine has a finite buffer; a full queue delays generation rather than silently dropping a parcel. IDs, not parcel copies, are stored. Both operations take O(1) time, including overflow rejection. Clearing takes O(capacity).
+Each input uses a manually allocated integer array with front, rear, count and capacity fields. Front starts at zero and rear at minus one. Enqueue advances rear modulo capacity before writing, so rear identifies the last inserted position, following the field manual. Dequeue advances front and returns the removed ID, or minus one if empty. Full/empty operations leave the queue unchanged. This bounded design is appropriate because an input machine has a finite buffer; a full queue delays generation rather than silently dropping a parcel. IDs, not parcel copies, are stored. Both operations take O(1) time, including overflow rejection. Clearing takes O(capacity).
 
 ### Binary min-heap
 
@@ -38,7 +38,7 @@ Lookup, update and deletion have expected O(1) cost but O(n) worst-case probing.
 
 Each stack node stores a junction index and its previous outgoing choice. A paused edit pushes a command; Z pops the most recent command and restores that choice. Push/pop are O(1), excluding allocator cost, and clearing is O(depth). The stack is cleared at the next simulation tick. It therefore reverses planning decisions while respecting the boundary between configuration and completed movement. It is not a physical rewind system.
 
-All four classes destroy their arrays or nodes and disable copying to prevent shallow-copy double deletion. No STL container substitutes for these implementations.
+All four classes destroy their arrays or nodes and implement deep-copy constructors and assignment operators, following Lab 01's Rule of Three. Each copy owns separate storage. Queue indices and stack nodes follow the supplied class examples; heap swaps use an explicit temporary variable, and hash probing uses ordinary loops. No STL container substitutes for these implementations. [CODE_GUIDE.md](CODE_GUIDE.md) identifies the remaining concepts that need explanation.
 
 ## 4. Architecture and module responsibilities
 
@@ -56,7 +56,7 @@ The player can switch junctions with the left mouse button, brake a cell with th
 
 The presentation uses fixed arrays, ordinary loops and linear interpolation. It advances animation at simulation tick boundaries, keeps belt offsets during brakes, and turns junction arrows from their visible angle even when the player clicks rapidly or undoes a switch. Pause and demos hold the factory animation. Outcomes retain their actual cell and points so several events in one tick can each produce feedback. These changes affect presentation without changing the four data-structure implementations or level rules.
 
-F1–F3 open isolated repeatable instances of the actual custom structures. Enter performs one operation; Backspace resets. The queue demo exposes physical array slots and front/rear wraparound. The heap demo displays the real array and tree, including stable deadline ties and extraction restructuring. The hash demo deliberately collides IDs 1, 8 and 15, performs successful/missing searches, creates/reuses a tombstone and triggers rehashing. These demonstrations hold the live simulation rather than corrupting it. The live dashboard separately reads the real game structures.
+F1–F3 open isolated repeatable instances of the actual custom structures. They start empty and explain the next action. Enter or the Next operation button performs one operation; Backspace or Reset restarts. The queue demo exposes physical array slots and front/rear wraparound. The heap demo displays the real array and tree, including stable deadline ties and extraction restructuring. The hash demo deliberately collides IDs 1, 8 and 15, performs successful/missing searches, creates/reuses a tombstone and triggers rehashing. The live simulation pauses during these demonstrations. The live dashboard separately reads the real game structures; Q or clicking its queue heading selects another input. Empty queue/heap messages explain that these structures contain waiting parcels, while the undo stack records paused junction edits.
 
 ## 6. Build and runtime verification
 

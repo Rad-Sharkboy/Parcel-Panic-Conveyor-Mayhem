@@ -1,34 +1,31 @@
-# Interfaces and ownership contract
+# Interfaces and ownership
 
-Defined before implementation. The simulation uses C++17 and has no Raylib dependency.
+The simulation uses C++17 and has no Raylib dependency. The [code guide](CODE_GUIDE.md) explains the syntax and lists every direct include.
 
-## Module 1 — Conveyor and Routing (planned Member 1)
+## Conveyor and routing
 
-* `CircularQueue(int capacity)`: owns a fixed-capacity dynamic `int[]`. `enqueue(int)` and `dequeue(int&)` return success in O(1); failed operations leave state unchanged. Front/rear/count/capacity and physical slots are observable. Rear is the next insertion slot. Copying is disabled.
-* `CommandStack`: owns singly linked command nodes. `push(SwitchCommand)`, `pop(SwitchCommand&)`, and `clear()` implement planning undo. Push/pop O(1); clear O(n). Copying is disabled.
-* `ConveyorSystem`: owns a fixed grid of cells and four input queues. Cells contain IDs, never registry pointers. `move(HashTable&, DispatchSystem&, tick)` performs one synchronous movement pass with deterministic arbitration. `switchJunction(index, planning)` records commands only during planning; `undo()` restores a junction; `brake(index,tick)` freezes a cell temporarily. Simulation ticks clear planning history.
+- `CircularQueue(int capacity)`: owns a fixed-capacity dynamic `int[]`. `enqueue(int)` returns false when full. `dequeue()` returns the removed ID; `peek()` reads it without removal. Both return -1 when empty. Front starts at 0; rear starts at -1 and identifies the last inserted slot. `size()`, `getCapacity()`, `getFront()`, `getRear()` and `getSlot(index)` let the UI read the actual array. Removed slots display as zero; game IDs start at 1.
+- `CommandStack`: owns singly linked `StackNode` objects. `push(SwitchCommand)` saves a junction's old choice. `pop()` returns the newest command, with `cell == -1` if empty. `isEmpty()` is checked before gameplay undo. `clear()` deletes the nodes.
+- `ConveyorSystem`: owns the grid, input queues and undo stack. Cells contain IDs. `move(HashTable&, DispatchSystem&, tick)` performs one movement pass. `switchJunction(index, planning)` records changes only during planning; `undo()` restores one change; `brake(index, tick)` freezes a cell temporarily. Simulation ticks clear planning history.
 
-## Module 2 — Parcel Tracking and Dispatch (planned Member 2)
+## Parcel tracking and dispatch
 
-* `MinHeap`: owns a growing dynamic `HeapEntry[]` containing ID/deadline/sequence. `insert`, `extract`, `peek`, `clear`; stable deadline then sequence ordering. Insert/extract O(log n), peek O(1); growth O(n). Copying disabled.
-* `HashTable`: owns an open-addressed `Bucket[]`, keyed by positive integer parcel ID. `insert(const Parcel&)` inserts or updates, `find(id)` returns a temporary pointer or null, `erase(id)` creates a tombstone, `clear()` resets records. Rehash invalidates all returned pointers. No caller retains a pointer across insertion/rehashing. Copying disabled.
-* `DispatchSystem`: owns the authoritative `HashTable registry` and `MinHeap ready`. `arrive(id,dock,tick)` checks destination and stages exactly once; `update(tick, interval)` expires active parcels and uses the shared loader. Deadline failure is terminal and penalized exactly once. Conveyor/queue stale IDs are removed on their next step. `reset()` clears registry, heap, scores and timers.
+- `MinHeap`: owns a growing `HeapEntry[]` of ID/deadline/sequence records. `insert(entry)` moves an entry upward; `extract(HeapEntry& output)` removes the root; `peek(HeapEntry& output)` reads it. The last two return false when empty and otherwise fill the caller's `output` variable. Earlier deadlines win; equal deadlines use arrival sequence. `getEntry(index)` exposes a read-only array entry for drawing.
+- `HashTable`: owns a `Bucket[]` with positive parcel IDs as keys. `insert(const Parcel&)` inserts or updates. `find(id)` returns a temporary pointer, or `nullptr` if absent. Its const overload permits read-only access. `erase(id)` leaves a tombstone; `clear()` empties the retained allocation; `reset(capacity)` replaces it (minimum three buckets). `getBucket(index)` exposes a read-only bucket.
+- `DispatchSystem`: owns `HashTable registry` and `MinHeap ready`. `arrive(id, dock, tick)` checks the destination and stages a parcel once. `update(tick, interval)` checks deadlines and uses the shared loader. A failed parcel receives one penalty; stale queue/cell/heap IDs are removed on subsequent processing. `reset()` clears records, scores and timers, retaining reusable allocations.
 
-## Module 3 — Shared Game and Presentation (joint)
+The queue, stack, heap and table each implement a destructor, copy constructor and copy assignment operator. Copies have independent storage, following Lab 01's Rule of Three. Public indexed getters assume a valid index; their callers loop within size/capacity. Complexity is documented in [COMPLEXITY.md](COMPLEXITY.md).
 
-* `Parcel`: value record with unique ID, destination, kind, lifecycle status, absolute deadline, current/previous grid cell and movement tick. `eventCell` and `pointsAwarded` preserve the actual outcome location and reward after the active cell is cleared.
-* `LevelDefinition`: value record of tuning and a handcrafted grid. `makeLevel(index)` constructs one of four layouts; index wraps modulo four.
-* `Simulation`: owns the conveyor and dispatch modules and generation counters. `load(index)` resets all state and time, `step()` advances exactly one logical tick, `next(delta)` wraps levels without awarding a victory. `validate()` checks occupancy, identity and active-state consistency. No copy operations.
-* `Game`: handles Raylib input, fixed-step timing, menus and isolated DSA demos. Fixed arrays hold visual parcel positions, belt offsets, junction angles, score popups and particles. `syncParcels()` reads the registry after each tick; `effects(dt)` advances visual state only while running (or finishing result effects). Rendering never changes the authoritative simulation.
-* `Renderer`: reads game state to draw the factory, feedback, dashboard and screens. Screen-specific functions live in `Screens.cpp`.
-* `Ui`: simple drawing functions and button rectangles shared with input. `loadFonts()` runs after window creation and `unloadFonts()` runs before closing it; fonts belong to presentation only.
+IDs survive registry rehashing; raw parcel pointers do not. Callers keep IDs between operations and use pointers temporarily. Queues and heap entries own no parcels. Terminal records stay in the registry until restart so the UI can inspect them.
 
-IDs survive registry rehashing; raw parcel pointers do not. Queues own no parcels. Dock arrival transitions through AT_DOCK to READY; only ready records are dispatched. Terminal records remain available until restart for inspection. Completed movement cannot be undone. No rendering function mutates the simulation.
+## Game and presentation
 
-## Inspection and validation helpers
+- `Parcel`: value record with ID, destination, kind, status, deadline and current/previous cell. `eventCell` and `pointsAwarded` preserve the outcome location and reward for animation.
+- `LevelDefinition`: tuning and a handcrafted grid. `makeLevel(index)` constructs one of four layouts; level indices wrap in both directions.
+- `Simulation`: owns conveyor and dispatch modules. `load(index)` resets a run; `step()` advances one logical tick; `next(delta)` changes level without awarding victory.
+- `Demos`: separate queue/heap/table objects. `open(mode)` clears practice data; `advance()` calls one of three short operation sequences. It belongs to the core and does not require Raylib.
+- `Game`: handles input, frame timing and screen state. `run()` creates the Raylib window, runs until quit, unloads fonts and closes the window. There are no command-line switches or diagnostic file exports. `syncParcels()` reads the registry; `effects(dt)` moves visual positions and effects. `inspectedLane` selects the live input queue displayed in the sidebar.
+- `Renderer`: reads the game state and draws it; screen functions live in `Screens.cpp`. It does not change simulation records.
+- `Ui`: drawing helpers and button rectangles shared with input. `loadFonts()` runs after window creation; `unloadFonts()` runs before closing it.
 
-`HashTable::reset(int capacity)` releases records and restores a minimum capacity of three; the F3 demo uses it to return to seven buckets after a rehash. `Demos::open(int mode)` resets isolated actual instances; `advance()` performs one real operation and records its result. Demos link into `parcel_core` independently of Raylib.
-
-`Simulation::validate() const` checks registry size versus generation, active membership exactly once across queues/cells/heap, matching locations/statuses, and actual terminal counts versus scoring counters. Terminal stale references are allowed until cleanup. It returns a boolean and mutates no state.
-
-`Game::run(int smokeFrames, const char* screenshot, const char* stateFile)` owns the Raylib window and returns success after cleanup. Its optional observation file is available for optional automated input verification; it reports actual screen, level, tick, pause, demo sizes/step, undo depth, brake readiness and first-junction choice. Normal play does not create this file. A smoke screenshot export failure returns a nonzero application exit code.
+Pause and practice demos stop the live simulation and world animation. A paused junction can still turn in response to a click or undo. Next operation/Enter, Reset/Backspace and Close/Esc operate the demos. F4 and Shift+F4 start another level immediately, including from a demo.
