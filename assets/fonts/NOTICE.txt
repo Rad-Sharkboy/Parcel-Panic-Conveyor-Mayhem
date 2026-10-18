@@ -1,0 +1,5 @@
+Open Sans Regular and Semibold
+Digitized data copyright (c) 2010-2011, Google Corporation.
+Source: https://www.opensans.com/
+These unmodified font files are distributed under the Apache License 2.0.
+See LICENSE.txt in this directory.

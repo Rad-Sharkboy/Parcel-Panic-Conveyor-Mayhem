@@ -3,7 +3,6 @@
 class Renderer {
 public:
     static void draw(const Game& game);
-    static bool clicked(float x, float y, float width, float height);
     static Vector2 center(int cell);
 private:
     static void background(const Game& game);
@@ -11,4 +10,5 @@ private:
     static void dashboard(const Game& game);
     static void menu(const Game& game);
     static void demonstration(const Game& game);
+    static void results(const Game& game);
 };

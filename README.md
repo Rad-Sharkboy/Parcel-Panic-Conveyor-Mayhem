@@ -12,7 +12,7 @@ Switch conveyor junctions to send parcels to matching delivery docks. Build comb
 - Red, blue and yellow destinations, express deadlines, fragile parcels and damaged parcels for recycling.
 - Emergency brakes, rush waves, combos, scoring and victory/failure screens.
 - Pause to plan routes and undo junction changes.
-- Animated belts, moving parcels, particles and a live DSA panel.
+- Moving conveyor tracks, labeled cardboard parcels, readable menus and a live DSA panel.
 - F1–F3 demonstrations using the actual custom data structures.
 - Instant F4 level skipping for the instructor's demo.
 
@@ -78,7 +78,7 @@ Press **Ctrl+Shift+B**, or run this in the VS Code terminal:
 .\build.bat
 ```
 
-The script downloads Raylib on the first build and compiles the game. Wait for **“Build complete.”**
+The script downloads Raylib on the first build, compiles the game and copies the included fonts into `build/assets`. Wait for **“Build complete.”**
 
 ### 3. Play
 
@@ -87,6 +87,8 @@ Double-click **`ParcelPanic.exe`** inside the generated **`build`** folder, or r
 ```powershell
 .\build\ParcelPanic.exe
 ```
+
+Keep the generated **`assets`** folder beside **`ParcelPanic.exe`**, including when sharing the game. The included Open Sans fonts need no separate installation.
 
 You can also choose **Terminal → Run Task → Run ParcelPanic**. To debug, press **F5**; the supplied VS Code configuration builds Debug and uses GDB. Once the game has keyboard focus, its F5 key restarts the current level.
 

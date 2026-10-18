@@ -8,6 +8,8 @@ void DispatchSystem::reset() {
 void DispatchSystem::fail(int id, ParcelStatus reason, int tick) {
     Parcel* p = registry.find(id);
     if (!p || terminal(p->status)) return;
+    if (p->cell >= 0) p->eventCell = p->cell;
+    p->pointsAwarded = -Config::PenaltyPoints;
     p->status = reason; p->cell = -1; ++failed; streak = 0;
     score = std::max(0, score - Config::PenaltyPoints);
     lastEventTick = tick; lastEventId = id; lastPoints = -Config::PenaltyPoints;
@@ -15,6 +17,7 @@ void DispatchSystem::fail(int id, ParcelStatus reason, int tick) {
 void DispatchSystem::arrive(int id, Destination dock, int tick) {
     Parcel* p = registry.find(id);
     if (!p || p->status != ParcelStatus::OnConveyor) return;
+    p->eventCell = p->cell;
     p->status = ParcelStatus::AtDock; p->cell = -1;
     if (p->destination != dock) { fail(id, ParcelStatus::Rejected, tick); return; }
     p->status = ParcelStatus::Ready; ready.insert({id, p->deadline, sequence_++});
@@ -31,6 +34,7 @@ void DispatchSystem::update(int tick, int interval) {
         if (!p || p->status != ParcelStatus::Ready) continue;
         p->status = ParcelStatus::Dispatched; ++delivered; ++streak;
         lastPoints = (p->kind == ParcelKind::Damaged ? Config::RecyclePoints : Config::BasePoints) * multiplier();
+        p->pointsAwarded = lastPoints;
         score += lastPoints; lastEventTick = tick; lastEventId = p->id;
         nextLoad_ = tick + interval;
         // An express dispatch gives queued/active parcels a small deadline extension.

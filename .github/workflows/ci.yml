@@ -27,5 +27,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ParcelPanic-Windows-x64
-          path: build/ParcelPanic.exe
+          path: |
+            build/ParcelPanic.exe
+            build/assets/
           if-no-files-found: error

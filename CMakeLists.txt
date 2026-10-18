@@ -36,13 +36,18 @@ if(PARCEL_BUILD_GAME)
         URL https://codeload.github.com/raysan5/raylib/tar.gz/c1ab645ca298a2801097931d1079b10ff7eb9df8
         URL_HASH SHA256=be3443c3fb97f7cbd18ae3f0ea2a73e6c1486128df33b639dce7e44070fc285d)
     FetchContent_MakeAvailable(raylib)
-    add_executable(parcel_panic src/main.cpp src/shared/Game.cpp src/shared/Renderer.cpp)
+    add_executable(parcel_panic src/main.cpp src/shared/Game.cpp src/shared/Renderer.cpp
+        src/shared/Screens.cpp src/shared/Ui.cpp)
     target_link_libraries(parcel_panic PRIVATE parcel_core raylib)
     parcel_warnings(parcel_panic)
     if(WIN32)
         set_target_properties(parcel_panic PROPERTIES OUTPUT_NAME ParcelPanic)
     endif()
-    # Bundle the MinGW runtimes so the finished Windows EXE can be shared on its own.
+    # Copy the bundled fonts beside the EXE for both double-click and VS Code launches.
+    add_custom_command(TARGET parcel_panic POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:parcel_panic>/assets")
+    # Bundle the MinGW runtimes; no compiler DLLs are needed on another Windows PC.
     if(MINGW)
         target_link_options(parcel_panic PRIVATE -static -static-libgcc -static-libstdc++)
     endif()

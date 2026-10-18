@@ -16,10 +16,12 @@ Defined before implementation. The simulation uses C++17 and has no Raylib depen
 
 ## Module 3 — Shared Game and Presentation (joint)
 
-* `Parcel`: value record with unique ID, destination, kind, lifecycle status, absolute deadline, current/previous grid cell and movement tick.
+* `Parcel`: value record with unique ID, destination, kind, lifecycle status, absolute deadline, current/previous grid cell and movement tick. `eventCell` and `pointsAwarded` preserve the actual outcome location and reward after the active cell is cleared.
 * `LevelDefinition`: value record of tuning and a handcrafted grid. `makeLevel(index)` constructs one of four layouts; index wraps modulo four.
 * `Simulation`: owns the conveyor and dispatch modules and generation counters. `load(index)` resets all state and time, `step()` advances exactly one logical tick, `next(delta)` wraps levels without awarding a victory. `validate()` checks occupancy, identity and active-state consistency. No copy operations.
-* `Game`: handles Raylib input, fixed-step timing, menus and isolated DSA demos. `Renderer` only reads game state to draw the factory, interpolation, feedback, dashboard and screens.
+* `Game`: handles Raylib input, fixed-step timing, menus and isolated DSA demos. Fixed arrays hold visual parcel positions, belt offsets, junction angles, score popups and particles. `syncParcels()` reads the registry after each tick; `effects(dt)` advances visual state only while running (or finishing result effects). Rendering never changes the authoritative simulation.
+* `Renderer`: reads game state to draw the factory, feedback, dashboard and screens. Screen-specific functions live in `Screens.cpp`.
+* `Ui`: simple drawing functions and button rectangles shared with input. `loadFonts()` runs after window creation and `unloadFonts()` runs before closing it; fonts belong to presentation only.
 
 IDs survive registry rehashing; raw parcel pointers do not. Queues own no parcels. Dock arrival transitions through AT_DOCK to READY; only ready records are dispatched. Terminal records remain available until restart for inspection. Completed movement cannot be undone. No rendering function mutates the simulation.
 

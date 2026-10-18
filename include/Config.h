@@ -46,6 +46,15 @@ constexpr int ExpressOffset = 1;
 constexpr int MaxLevelTicks = 1800;
 constexpr int DemoCapacity = 6;
 constexpr int ParticleCount = 80;
+constexpr int PopupCount = 16;
+constexpr float ParcelTravelFraction = 0.82f;
+constexpr float ParcelFadeSeconds = 0.24f;
+constexpr float PopupSeconds = 1.2f;
+constexpr float ParticleSeconds = 0.6f;
+constexpr float JunctionTurnSpeed = 10.0f;
+constexpr float LevelTitleSeconds = 2.5f;
+constexpr float BeltPixelsPerSecond = 22.0f;
+constexpr float BeltRibSpacing = 12.0f;
 struct LevelTuning { int total, quota, target, spawnTicks, moveTicks, loaderTicks, colors; bool specials, rush; };
 constexpr LevelTuning LevelsTuning[Levels] = {
     {20, 12, 1200, 12, 3, 4, 2, false, false},

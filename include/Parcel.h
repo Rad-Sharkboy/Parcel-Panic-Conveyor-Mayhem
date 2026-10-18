@@ -12,6 +12,9 @@ struct Parcel {
     int cell = -1;
     int previousCell = -1;
     int movedTick = 0;
+    // Keep the actual outcome location/reward after cell is cleared.
+    int eventCell = -1;
+    int pointsAwarded = 0;
 };
 inline bool terminal(ParcelStatus s) {
     return s == ParcelStatus::Dispatched || s == ParcelStatus::Rejected || s == ParcelStatus::Broken || s == ParcelStatus::Expired;

@@ -27,21 +27,21 @@ LevelDefinition makeLevel(int index) {
     LevelDefinition l; index = (index % Config::Levels + Config::Levels) % Config::Levels;
     l.tuning = Config::LevelsTuning[index];
     if (index == 0) {
-        l.name = "SORT SCHOOL"; l.lesson = "Two colors. Click cyan junctions; follow the matching letter docks.";
+        l.name = "Sort School"; l.lesson = "Two colors. Click cyan junctions; follow the matching letter docks.";
         mergeInputs(l, 3, 7, 3); path(l, 3, 5, 15, 5);
         path(l, 8, 4, 8, 2); path(l, 8, 2, 15, 2); dock(l, 15, 2, Destination::Red);
         path(l, 12, 6, 12, 8); path(l, 12, 8, 15, 8); dock(l, 15, 8, Destination::Blue);
         dock(l, 15, 5, Destination::Blue);
         junction(l, 8, 5, 9, 5, 8, 4); junction(l, 12, 5, 13, 5, 12, 6);
     } else if (index == 1) {
-        l.name = "RUSH JUNCTION"; l.lesson = "Three merging inputs. Watch the rush warning and stagger streams with brakes.";
+        l.name = "Rush Junction"; l.lesson = "Three merging inputs. Watch the rush warning and stagger streams with brakes.";
         mergeInputs(l, 2, 8, 3); path(l, 0, 5, 15, 5); input(l, 0, 5);
         path(l, 6, 4, 6, 1); path(l, 6, 1, 15, 1); dock(l, 15, 1, Destination::Red);
         path(l, 10, 6, 10, 9); path(l, 10, 9, 15, 9); dock(l, 15, 9, Destination::Blue);
         dock(l, 15, 5, Destination::Yellow);
         junction(l, 6, 5, 7, 5, 6, 4); junction(l, 10, 5, 11, 5, 10, 6);
     } else if (index == 2) {
-        l.name = "FRAGILE FREIGHT"; l.lesson = "F parcels need the upper bypass. X parcels go to green recycling; ! is express.";
+        l.name = "Fragile Freight"; l.lesson = "F parcels need the upper bypass. X parcels go to green recycling; ! is express.";
         mergeInputs(l, 2, 8, 3); path(l, 3, 5, 15, 5);
         path(l, 6, 4, 6, 3); path(l, 6, 3, 9, 3); path(l, 9, 3, 9, 5);
         l.cells[cellAt(7, 5)].kind = CellKind::Hazard;
@@ -52,7 +52,7 @@ LevelDefinition makeLevel(int index) {
         dock(l, 15, 5, Destination::Recycle);
         junction(l, 10, 5, 11, 5, 10, 4); junction(l, 12, 5, 13, 5, 12, 6); junction(l, 14, 5, 15, 5, 14, 4);
     } else {
-        l.name = "MAYHEM MODE"; l.lesson = "Vertical sorting spine, three inputs, all parcel types and a slower shared loader.";
+        l.name = "Mayhem Mode"; l.lesson = "Vertical sorting spine, three inputs, all parcel types and a slower shared loader.";
         path(l, 0, 1, 8, 1); path(l, 8, 1, 8, 9); path(l, 8, 9, 15, 9);
         path(l, 0, 3, 8, 3); path(l, 0, 5, 8, 5);
         input(l, 0, 1); input(l, 0, 3); input(l, 0, 5);
