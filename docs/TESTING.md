@@ -36,7 +36,7 @@ The nine final-level losses are verified deadline expirations. They are allowed 
 
 ## What was actually verified
 
-The original implementation was compiled and exercised in the cloud. Debug, Release and AddressSanitizer/UndefinedBehaviorSanitizer core runs passed with leak detection, and the graphical game rendered into a virtual display. The screenshot in the README is a genuine capture. An additional cloud input check exercised 26 keyboard/mouse outcomes, including pause, switching/undo, braking, demo mutations and level wrapping. Cloud-only helpers are kept outside the published project.
+The original implementation was compiled and exercised in the cloud. Debug, Release and AddressSanitizer/UndefinedBehaviorSanitizer core runs passed with leak detection, and the graphical game rendered into a virtual display. An additional cloud input check exercised 26 keyboard/mouse outcomes, including pause, switching/undo, braking, demo mutations and level wrapping. Cloud-only helpers are kept outside the published project.
 
 A MinGW-w64 cross-build also successfully produced a real **64-bit Windows `ParcelPanic.exe`** and `parcel_tests.exe`. Inspection of the game EXE found only Windows system DLL imports (`GDI32`, `KERNEL32`, `msvcrt`, `SHELL32`, `USER32`, `WINMM`), with no MinGW runtime DLL requirement. This verifies Windows-target compilation and linking, not native Windows execution. The cloud used its own generator/toolchain for that check; it could not execute Windows CMD or the produced EXEs.
 
