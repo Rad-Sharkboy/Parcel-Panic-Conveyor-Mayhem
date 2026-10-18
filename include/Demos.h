@@ -3,7 +3,7 @@
 #include "CircularQueue.h"
 #include "MinHeap.h"
 #include "HashTable.h"
-#include <string>
+#include <string> // Text messages, number-to-text conversion and font file paths.
 class Demos {
 public:
     int mode = 0, step = 0;

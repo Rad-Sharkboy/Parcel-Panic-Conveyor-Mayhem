@@ -22,6 +22,7 @@ public:
     MinHeap(const MinHeap& other);
     MinHeap& operator=(const MinHeap& other);
 
+    // const after a method means it only reads this object.
     bool isEmpty() const;
     // Add an entry and move it toward the root. O(log n), or O(n) if the array grows.
     void insert(HeapEntry entry);

@@ -1,84 +1,118 @@
 #include "Simulation.h"
-#include <algorithm>
+
 void Simulation::load(int index) {
+    // The second modulo also wraps negative indices (Shift+F4 from the first level).
     level = (index % Config::Levels + Config::Levels) % Config::Levels;
-    conveyor.reset(level); dispatch.reset(); tick = generated = jam = nextSpawn_ = 0; outcome = Outcome::Playing;
+    conveyor.reset(level);
+    dispatch.reset();
+    tick = 0;
+    generated = 0;
+    jam = 0;
+    nextSpawnTick = 0;
+    outcome = Outcome::Playing;
 }
-void Simulation::next(int delta) { load(level + delta); }
-bool Simulation::rush() const { return conveyor.layout.tuning.rush && tick % Config::RushPeriod >= Config::RushPeriod - Config::RushDuration; }
+
+void Simulation::next(int delta) {
+    load(level + delta);
+}
+
+bool Simulation::rush() const {
+    int phase = tick % Config::RushPeriod;
+    return conveyor.layout.tuning.rush && phase >= Config::RushPeriod - Config::RushDuration;
+}
+
 bool Simulation::rushWarning() const {
     int phase = tick % Config::RushPeriod;
-    return conveyor.layout.tuning.rush && phase >= Config::RushPeriod - Config::RushDuration - Config::RushWarning && !rush();
+    int warningStart = Config::RushPeriod - Config::RushDuration - Config::RushWarning;
+    return conveyor.layout.tuning.rush && phase >= warningStart && !rush();
 }
+
 bool Simulation::spawn() {
-    const Config::LevelTuning& t = conveyor.layout.tuning;
-    if (generated >= t.total) return false;
+    const Config::LevelTuning& tuning = conveyor.layout.tuning;
+    if (generated >= tuning.total || generated >= Config::MaxParcels) {
+        return false;
+    }
     int lane = generated % conveyor.layout.inputCount;
-    if (conveyor.inputs[lane].size() == conveyor.inputs[lane].getCapacity()) return false;
-    Parcel p; p.id = generated + 1; p.destination = static_cast<Destination>(generated % t.colors);
-    if (t.specials) {
-        if (generated % Config::DamagedPeriod == Config::DamagedOffset) { p.kind = ParcelKind::Damaged; p.destination = Destination::Recycle; }
-        else if (generated % Config::FragilePeriod == Config::FragileOffset) p.kind = ParcelKind::Fragile;
-        else if (generated % Config::ExpressPeriod == Config::ExpressOffset) p.kind = ParcelKind::Express;
+    if (conveyor.inputs[lane].isFull()) {
+        return false;
     }
-    p.deadline = tick + (p.kind == ParcelKind::Express ? Config::ExpressDeadlineTicks : Config::DeadlineTicks);
-    dispatch.registry.insert(p); p.status = ParcelStatus::Queued; dispatch.registry.insert(p);
-    conveyor.inputs[lane].enqueue(p.id); ++generated; return true;
-}
-void Simulation::step() {
-    if (outcome != Outcome::Playing) return;
-    ++tick; conveyor.history.clear(); const Config::LevelTuning& t = conveyor.layout.tuning;
-    if (tick >= nextSpawn_ && generated < t.total) {
-        if (spawn()) nextSpawn_ = tick + (rush() ? std::max(Config::RushMinSpawnTicks, t.spawnTicks / Config::RushSpawnDivisor) : t.spawnTicks);
-    }
-    dispatch.update(tick, t.loaderTicks);
-    if (tick % t.moveTicks == 0) {
-        conveyor.move(dispatch.registry, dispatch, tick);
-        conveyor.feed(dispatch.registry, tick);
-        int queued = 0; for (int i = 0; i < conveyor.layout.inputCount; ++i) queued += conveyor.inputs[i].size();
-        int congestion = conveyor.blocked + (queued >= Config::InputCapacity ? 2 : 0);
-        jam = std::clamp(jam + (congestion >= Config::JamBlockedThreshold ? Config::JamRise : -Config::JamRecovery), 0, Config::JamLimit);
-    }
-    if (jam >= Config::JamLimit || tick >= Config::MaxLevelTicks) outcome = Outcome::Lost;
-    else if (generated == t.total && dispatch.delivered + dispatch.failed == generated) {
-        outcome = dispatch.delivered >= t.quota && dispatch.score >= t.target ? Outcome::Won : Outcome::Lost;
-    }
-}
-bool Simulation::validate() const {
-    int seen[Config::MaxParcels + 1]{};
-    for (int lane = 0; lane < conveyor.layout.inputCount; ++lane) {
-        const CircularQueue& q = conveyor.inputs[lane];
-        for (int position = 0; position < q.size(); ++position) {
-            int id = q.getSlot((q.getFront() + position) % q.getCapacity());
-            const Parcel* p = dispatch.registry.find(id);
-            if (!p || id < 1 || id > Config::MaxParcels) return false;
-            if (terminal(p->status)) continue;
-            if (p->status != ParcelStatus::Queued || ++seen[id] != 1) return false;
+
+    Parcel parcel;
+    parcel.id = generated + 1;
+    parcel.destination = (Destination)(generated % tuning.colors);
+    if (tuning.specials) {
+        if (generated % Config::DamagedPeriod == Config::DamagedOffset) {
+            parcel.kind = ParcelKind::Damaged;
+            parcel.destination = Destination::Recycle;
+        } else if (generated % Config::FragilePeriod == Config::FragileOffset) {
+            parcel.kind = ParcelKind::Fragile;
+        } else if (generated % Config::ExpressPeriod == Config::ExpressOffset) {
+            parcel.kind = ParcelKind::Express;
         }
     }
-    for (int i = 0; i < Config::Cells; ++i) {
-        int id = conveyor.layout.cells[i].parcel;
-        if (!id) continue;
-        const Parcel* p = dispatch.registry.find(id);
-        if (!p || id < 1 || id > Config::MaxParcels) return false;
-        // Terminal IDs may remain until the next cleanup pass, but are never active.
-        if (terminal(p->status)) continue;
-        if (++seen[id] != 1 || p->status != ParcelStatus::OnConveyor || p->cell != i) return false;
+    parcel.deadline = tick + Config::DeadlineTicks;
+    if (parcel.kind == ParcelKind::Express) {
+        parcel.deadline = tick + Config::ExpressDeadlineTicks;
     }
-    for (int i = 0; i < dispatch.ready.size(); ++i) {
-        int id = dispatch.ready.getEntry(i).id; const Parcel* p = dispatch.registry.find(id);
-        if (!p || id < 1 || id > Config::MaxParcels) return false;
-        if (terminal(p->status)) continue;
-        if (p->status != ParcelStatus::Ready || ++seen[id] != 1) return false;
+    parcel.status = ParcelStatus::Queued;
+    dispatch.registry.insert(parcel);
+    conveyor.inputs[lane].enqueue(parcel.id);
+    generated++;
+    return true;
+}
+
+void Simulation::step() {
+    if (outcome != Outcome::Playing) {
+        return;
     }
-    int delivered = 0, failed = 0;
-    for (int i = 0; i < dispatch.registry.getCapacity(); ++i) {
-        const Bucket& b = dispatch.registry.getBucket(i);
-        if (b.state != BucketState::Occupied) continue;
-        if (b.parcel.id < 1 || b.parcel.id > Config::MaxParcels) return false;
-        if (b.parcel.status == ParcelStatus::Dispatched) ++delivered;
-        else if (terminal(b.parcel.status)) ++failed;
-        else if (seen[b.parcel.id] != 1) return false;
+    tick++;
+    conveyor.history.clear(); // Undo is only for planning, not for past movement.
+    const Config::LevelTuning& tuning = conveyor.layout.tuning;
+    if (tick >= nextSpawnTick && generated < tuning.total) {
+        if (spawn()) {
+            int delay = tuning.spawnTicks;
+            if (rush()) {
+                delay = delay / Config::RushSpawnDivisor;
+                if (delay < Config::RushMinSpawnTicks) {
+                    delay = Config::RushMinSpawnTicks;
+                }
+            }
+            nextSpawnTick = tick + delay;
+        }
     }
-    return delivered == dispatch.delivered && failed == dispatch.failed && dispatch.registry.size() == generated;
+
+    dispatch.update(tick, tuning.loaderTicks);
+    if (tick % tuning.moveTicks == 0) {
+        conveyor.move(dispatch.registry, dispatch, tick);
+        conveyor.feed(dispatch.registry, tick);
+        int waiting = 0;
+        for (int i = 0; i < conveyor.layout.inputCount; i++) {
+            waiting += conveyor.inputs[i].size();
+        }
+        int congestion = conveyor.blocked;
+        if (waiting >= Config::InputCapacity) {
+            congestion += 2;
+        }
+        if (congestion >= Config::JamBlockedThreshold) {
+            jam += Config::JamRise;
+        } else {
+            jam -= Config::JamRecovery;
+        }
+        if (jam < 0) {
+            jam = 0;
+        }
+        if (jam > Config::JamLimit) {
+            jam = Config::JamLimit;
+        }
+    }
+
+    if (jam >= Config::JamLimit || tick >= Config::MaxLevelTicks) {
+        outcome = Outcome::Lost;
+    } else if (generated == tuning.total && dispatch.delivered + dispatch.failed == generated) {
+        if (dispatch.delivered >= tuning.quota && dispatch.score >= tuning.target) {
+            outcome = Outcome::Won;
+        } else {
+            outcome = Outcome::Lost;
+        }
+    }
 }

@@ -4,7 +4,12 @@
 #include "Demos.h"
 #include "raylib.h"
 enum class Screen { Menu, Select, Help, Playing, Results };
-struct Particle { Vector2 position{}, velocity{}; float life = 0; Color color{}; };
+struct Particle {
+    Vector2 position{}, velocity{};
+    float life = 0;
+    Color color{};
+};
+// Drawing positions are separate from logical cells, so movement looks smooth.
 struct ParcelMotion {
     Vector2 from{}, position{}, target{};
     float elapsed = 0, duration = 0, opacity = 0;
@@ -12,14 +17,19 @@ struct ParcelMotion {
     ParcelStatus status = ParcelStatus::Created;
     bool outcomePending = false;
 };
-struct ScorePopup { Vector2 position{}; float life = 0; int points = 0; };
+struct ScorePopup {
+    Vector2 position{};
+    float life = 0;
+    int points = 0;
+};
 class Game {
-    bool quitting_ = false;
+    bool quitting = false;
     void input();
     void effects(float dt);
     void syncParcels();
     void deliveryEffect(const Parcel& parcel);
     void turnJunctions(float dt);
+
 public:
     Simulation simulation;
     Demos demos;
@@ -38,7 +48,7 @@ public:
     Particle particles[Config::ParticleCount]{};
     Game();
     void start(int level);
-    bool run(int smokeFrames = 0, const char* screenshot = nullptr, const char* stateFile = nullptr);
+    bool run();
 };
 
 #endif

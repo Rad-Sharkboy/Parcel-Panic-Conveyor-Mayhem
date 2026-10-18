@@ -3,7 +3,8 @@
 #include "ConveyorSystem.h"
 enum class Outcome { Playing, Won, Lost };
 class Simulation {
-    int nextSpawn_ = 0;
+    int nextSpawnTick = 0;
+
 public:
     ConveyorSystem conveyor;
     DispatchSystem dispatch;
@@ -14,7 +15,6 @@ public:
     void step();
     bool rush() const;
     bool rushWarning() const;
-    bool validate() const;
     // Deterministic parcel creation through the real input queues; false when buffer is full.
     bool spawn();
 };

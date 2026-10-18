@@ -5,6 +5,7 @@
 class DispatchSystem {
     int nextSequence = 0;
     int nextLoadTick = 0;
+
 public:
     HashTable registry;
     MinHeap ready;

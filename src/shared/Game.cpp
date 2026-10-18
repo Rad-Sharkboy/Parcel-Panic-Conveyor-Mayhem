@@ -1,11 +1,11 @@
 #include "Game.h"
 #include "Renderer.h"
 #include "Ui.h"
-#include <algorithm>
-#include <cmath>
-#include <fstream>
+#include <cmath> // Angles, distances, rounding and looping motion for the Raylib graphics.
 
-Game::Game() { simulation.load(0); }
+Game::Game() {
+    simulation.load(0);
+}
 void Game::start(int level) {
     simulation.load(level);
     selectedLevel = simulation.level;
@@ -21,74 +21,131 @@ void Game::start(int level) {
         beltOffset[i][0] = beltOffset[i][1] = 0;
         junctionChoice[i] = simulation.conveyor.layout.cells[i].choice;
         const Cell& cell = simulation.conveyor.layout.cells[i];
-        if (cell.kind != CellKind::Junction) continue;
+        if (cell.kind != CellKind::Junction) {
+            continue;
+        }
         Vector2 p = Renderer::center(i), next = Renderer::center(cell.next[cell.choice]);
         junctionAngle[i] = std::atan2(next.y - p.y, next.x - p.x);
     }
-    for (int i = 0; i <= Config::MaxParcels; ++i) motion[i] = ParcelMotion{};
-    for (int i = 0; i < Config::PopupCount; ++i) popups[i] = ScorePopup{};
-    for (int i = 0; i < Config::ParticleCount; ++i) particles[i] = Particle{};
+    for (int i = 0; i <= Config::MaxParcels; ++i) {
+        motion[i] = ParcelMotion{};
+    }
+    for (int i = 0; i < Config::PopupCount; ++i) {
+        popups[i] = ScorePopup{};
+    }
+    for (int i = 0; i < Config::ParticleCount; ++i) {
+        particles[i] = Particle{};
+    }
 }
 void Game::input() {
     bool shift = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
-    if (IsKeyPressed(KEY_F4)) { start(simulation.level + (shift ? -1 : 1)); return; }
-    if (IsKeyPressed(KEY_F5) || (IsKeyPressed(KEY_R) && (screen == Screen::Playing || screen == Screen::Results))) {
-        start(simulation.level); return;
+    if (IsKeyPressed(KEY_F4)) {
+        start(simulation.level + (shift ? -1 : 1));
+        return;
+    }
+    if (IsKeyPressed(KEY_F5) ||
+        (IsKeyPressed(KEY_R) && (screen == Screen::Playing || screen == Screen::Results))) {
+        start(simulation.level);
+        return;
     }
     for (int i = 1; i <= 3; ++i) {
         if (IsKeyPressed(KEY_F1 + i - 1)) {
-            if (demos.mode == i) demos.mode = 0;
-            else demos.open(i);
+            if (demos.mode == i) {
+                demos.mode = 0;
+            } else {
+                demos.open(i);
+            }
             return;
         }
     }
     if (demos.mode) {
-        if (IsKeyPressed(KEY_ESCAPE)) demos.mode = 0;
-        else if (IsKeyPressed(KEY_BACKSPACE)) demos.open(demos.mode);
-        else if (IsKeyPressed(KEY_ENTER)) demos.advance();
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            demos.mode = 0;
+        } else if (IsKeyPressed(KEY_BACKSPACE)) {
+            demos.open(demos.mode);
+        } else if (IsKeyPressed(KEY_ENTER)) {
+            demos.advance();
+        }
         return;
     }
-    if (IsKeyPressed(KEY_H)) hud = !hud;
+    if (IsKeyPressed(KEY_H)) {
+        hud = !hud;
+    }
     if (screen == Screen::Menu) {
-        if (IsKeyPressed(KEY_ENTER) || Ui::clicked(Ui::Play)) start(selectedLevel);
-        else if (Ui::clicked(Ui::Select)) screen = Screen::Select;
-        else if (Ui::clicked(Ui::Help)) screen = Screen::Help;
-        else if (Ui::clicked(Ui::Quit) || IsKeyPressed(KEY_ESCAPE)) quitting_ = true;
+        if (IsKeyPressed(KEY_ENTER) || Ui::clicked(Ui::Play)) {
+            start(selectedLevel);
+        } else if (Ui::clicked(Ui::Select)) {
+            screen = Screen::Select;
+        } else if (Ui::clicked(Ui::Help)) {
+            screen = Screen::Help;
+        } else if (Ui::clicked(Ui::Quit) || IsKeyPressed(KEY_ESCAPE)) {
+            quitting = true;
+        }
         return;
     }
     if (screen == Screen::Select) {
         for (int i = 0; i < Config::Levels; ++i) {
-            if (Ui::clicked(Ui::levelCard(i)) || IsKeyPressed(KEY_ONE + i)) { start(i); return; }
+            if (Ui::clicked(Ui::levelCard(i)) || IsKeyPressed(KEY_ONE + i)) {
+                start(i);
+                return;
+            }
         }
-        if (IsKeyPressed(KEY_ESCAPE) || Ui::clicked(Ui::Back)) screen = Screen::Menu;
+        if (IsKeyPressed(KEY_ESCAPE) || Ui::clicked(Ui::Back)) {
+            screen = Screen::Menu;
+        }
         return;
     }
     if (screen == Screen::Help) {
-        if (IsKeyPressed(KEY_ESCAPE) || Ui::clicked(Ui::Back)) screen = Screen::Menu;
+        if (IsKeyPressed(KEY_ESCAPE) || Ui::clicked(Ui::Back)) {
+            screen = Screen::Menu;
+        }
         return;
     }
     if (screen == Screen::Results) {
-        if (Ui::clicked(Ui::Retry)) start(simulation.level);
-        else if (Ui::clicked(Ui::Next) || IsKeyPressed(KEY_ENTER)) start(simulation.level + 1);
-        else if (Ui::clicked(Ui::ResultsMenu) || IsKeyPressed(KEY_ESCAPE)) screen = Screen::Menu;
+        if (Ui::clicked(Ui::Retry)) {
+            start(simulation.level);
+        } else if (Ui::clicked(Ui::Next) || IsKeyPressed(KEY_ENTER)) {
+            start(simulation.level + 1);
+        } else if (Ui::clicked(Ui::ResultsMenu) || IsKeyPressed(KEY_ESCAPE)) {
+            screen = Screen::Menu;
+        }
         return;
     }
-    if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) paused = !paused;
-    if (paused && IsKeyPressed(KEY_Z)) simulation.conveyor.undo();
+    if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+        paused = !paused;
+    }
+    if (paused && IsKeyPressed(KEY_Z)) {
+        simulation.conveyor.undo();
+    }
     if (paused) {
-        if (Ui::clicked(Ui::Resume)) paused = false;
-        else if (Ui::clicked(Ui::Restart)) { start(simulation.level); return; }
-        else if (Ui::clicked(Ui::MainMenu)) { screen = Screen::Menu; return; }
+        if (Ui::clicked(Ui::Resume)) {
+            paused = false;
+        } else if (Ui::clicked(Ui::Restart)) {
+            start(simulation.level);
+            return;
+        } else if (Ui::clicked(Ui::MainMenu)) {
+            screen = Screen::Menu;
+            return;
+        }
     }
     Vector2 mouse = GetMousePosition();
-    int x = static_cast<int>((mouse.x - Config::BoardX) / Config::Tile);
-    int y = static_cast<int>((mouse.y - Config::BoardY) / Config::Tile);
-    hoverCell = mouse.x >= Config::BoardX && mouse.y >= Config::BoardY && x >= 0 && x < Config::Columns && y >= 0 && y < Config::Rows ? cellAt(x, y) : -1;
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) simulation.conveyor.switchJunction(hoverCell, paused);
-    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) simulation.conveyor.brake(hoverCell, simulation.tick);
+    int x = (int)((mouse.x - Config::BoardX) / Config::Tile);
+    int y = (int)((mouse.y - Config::BoardY) / Config::Tile);
+    hoverCell = mouse.x >= Config::BoardX && mouse.y >= Config::BoardY && x >= 0 && x < Config::Columns &&
+                        y >= 0 && y < Config::Rows
+                    ? cellAt(x, y)
+                    : -1;
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        simulation.conveyor.switchJunction(hoverCell, paused);
+    }
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        simulation.conveyor.brake(hoverCell, simulation.tick);
+    }
 }
 void Game::turnJunctions(float dt) {
-    if (screen != Screen::Playing || demos.mode) return;
+    if (screen != Screen::Playing || demos.mode) {
+        return;
+    }
     const LevelDefinition& layout = simulation.conveyor.layout;
     for (int j = 0; j < layout.junctionCount; ++j) {
         int i = layout.junctions[j];
@@ -100,30 +157,52 @@ void Game::turnJunctions(float dt) {
         Vector2 p = Renderer::center(i), next = Renderer::center(cell.next[cell.choice]);
         float target = std::atan2(next.y - p.y, next.x - p.x);
         float difference = target - junctionAngle[i];
-        while (difference > PI) difference -= 2 * PI;
-        while (difference < -PI) difference += 2 * PI;
+        while (difference > PI) {
+            difference -= 2 * PI;
+        }
+        while (difference < -PI) {
+            difference += 2 * PI;
+        }
         // Start from the visible angle, including rapid clicks and stack undo.
         float step = Config::JunctionTurnSpeed * dt;
-        junctionAngle[i] += std::clamp(difference, -step, step);
-        junctionPulse[i] = std::max(0.0f, junctionPulse[i] - dt * 4);
+        if (difference > step) {
+            difference = step;
+        }
+        if (difference < -step) {
+            difference = -step;
+        }
+        junctionAngle[i] += difference;
+        junctionPulse[i] -= dt * 4;
+        if (junctionPulse[i] < 0) {
+            junctionPulse[i] = 0;
+        }
     }
 }
 void Game::deliveryEffect(const Parcel& parcel) {
     int cell = parcel.eventCell;
-    if (cell < 0) cell = simulation.conveyor.layout.inputs[(parcel.id - 1) % simulation.conveyor.layout.inputCount];
+    if (cell < 0) {
+        cell = simulation.conveyor.layout.inputs[(parcel.id - 1) % simulation.conveyor.layout.inputCount];
+    }
     Vector2 origin = Renderer::center(cell);
-    if (parcel.status == ParcelStatus::Expired && motion[parcel.id].targetCell >= 0)
+    if (parcel.status == ParcelStatus::Expired && motion[parcel.id].targetCell >= 0) {
         origin = motion[parcel.id].position;
+    }
     for (int i = 0; i < Config::PopupCount; ++i) {
-        if (popups[i].life > 0) continue;
+        if (popups[i].life > 0) {
+            continue;
+        }
         popups[i] = {origin, Config::PopupSeconds, parcel.pointsAwarded};
         break;
     }
     int emitted = 0;
     for (int i = 0; i < Config::ParticleCount && emitted < 10; ++i) {
-        if (particles[i].life > 0) continue;
+        if (particles[i].life > 0) {
+            continue;
+        }
         float angle = emitted * 2 * PI / 10;
-        particles[i] = {origin, {std::cos(angle) * 58, std::sin(angle) * 58}, Config::ParticleSeconds,
+        particles[i] = {origin,
+                        {std::cos(angle) * 58, std::sin(angle) * 58},
+                        Config::ParticleSeconds,
                         parcel.pointsAwarded > 0 ? Ui::Cyan : Ui::destinationColor(Destination::Red)};
         ++emitted;
     }
@@ -132,18 +211,23 @@ void Game::syncParcels() {
     const HashTable& registry = simulation.dispatch.registry;
     for (int i = 0; i < registry.getCapacity(); ++i) {
         const Bucket& bucket = registry.getBucket(i);
-        if (bucket.state != BucketState::Occupied) continue;
+        if (bucket.state != BucketState::Occupied) {
+            continue;
+        }
         const Parcel& parcel = bucket.parcel;
         ParcelMotion& m = motion[parcel.id];
         int target = parcel.status == ParcelStatus::OnConveyor ? parcel.cell : parcel.eventCell;
         if (target >= 0 && target != m.targetCell) {
             Vector2 position = Renderer::center(target);
-            if (m.targetCell < 0) m.position = position;
+            if (m.targetCell < 0) {
+                m.position = position;
+            }
             m.from = m.position;
             m.target = position;
             m.targetCell = target;
             m.elapsed = 0;
-            m.duration = Config::TickSeconds * simulation.conveyor.layout.tuning.moveTicks * Config::ParcelTravelFraction;
+            m.duration = Config::TickSeconds * simulation.conveyor.layout.tuning.moveTicks *
+                         Config::ParcelTravelFraction;
         }
         if (parcel.status != m.status && terminal(parcel.status)) {
             // Observe every terminal transition, even several events in one tick.
@@ -156,68 +240,109 @@ void Game::syncParcels() {
         m.status = parcel.status;
     }
     int multiplier = simulation.dispatch.multiplier();
-    if (multiplier > comboShown) comboTimer = Config::PopupSeconds;
-    else if (multiplier < comboShown) comboTimer = 0;
+    if (multiplier > comboShown) {
+        comboTimer = Config::PopupSeconds;
+    } else if (multiplier < comboShown) {
+        comboTimer = 0;
+    }
     comboShown = multiplier;
 }
 void Game::effects(float dt) {
     bool running = screen == Screen::Playing && !paused && !demos.mode;
-    if (!running && !(screen == Screen::Results && !demos.mode)) return;
+    if (!running && !(screen == Screen::Results && !demos.mode)) {
+        return;
+    }
     if (running) {
         beltClock += dt;
-        titleTimer = std::max(0.0f, titleTimer - dt);
+        titleTimer -= dt;
+        if (titleTimer < 0) {
+            titleTimer = 0;
+        }
         const LevelDefinition& layout = simulation.conveyor.layout;
         for (int i = 0; i < Config::Cells; ++i) {
             const Cell& cell = layout.cells[i];
-            if (cell.brakeUntil > simulation.tick) continue;
+            if (cell.brakeUntil > simulation.tick) {
+                continue;
+            }
             for (int branch = 0; branch < 2; ++branch) {
                 int target = cell.next[branch];
-                if (target >= 0 && layout.cells[target].brakeUntil <= simulation.tick)
-                    beltOffset[i][branch] = std::fmod(beltOffset[i][branch] + dt * Config::BeltPixelsPerSecond, static_cast<float>(Config::Tile));
+                if (target >= 0 && layout.cells[target].brakeUntil <= simulation.tick) {
+                    beltOffset[i][branch] = std::fmod(
+                        beltOffset[i][branch] + dt * Config::BeltPixelsPerSecond, (float)(Config::Tile));
+                }
             }
         }
     }
-    comboTimer = std::max(0.0f, comboTimer - dt);
+    comboTimer -= dt;
+    if (comboTimer < 0) {
+        comboTimer = 0;
+    }
     for (int i = 1; i <= Config::MaxParcels; ++i) {
         ParcelMotion& m = motion[i];
         if (m.outcomePending && m.elapsed + dt >= m.duration) {
             const Parcel* p = simulation.dispatch.registry.find(i);
-            if (p) deliveryEffect(*p);
+            if (p) {
+                deliveryEffect(*p);
+            }
             m.outcomePending = false;
         }
-        if (m.targetCell < 0) continue;
+        if (m.targetCell < 0) {
+            continue;
+        }
         m.elapsed += dt;
-        float fraction = m.duration > 0 ? std::min(1.0f, m.elapsed / m.duration) : 1;
-        m.position = {m.from.x + (m.target.x - m.from.x) * fraction, m.from.y + (m.target.y - m.from.y) * fraction};
-        if (m.status == ParcelStatus::OnConveyor) m.opacity = std::min(1.0f, m.opacity + dt * 8);
-        else if (fraction >= 1) m.opacity = std::max(0.0f, m.opacity - dt / Config::ParcelFadeSeconds);
+        float fraction = 1;
+        if (m.duration > 0) {
+            fraction = m.elapsed / m.duration;
+        }
+        if (fraction > 1) {
+            fraction = 1;
+        }
+        m.position = {m.from.x + (m.target.x - m.from.x) * fraction,
+                      m.from.y + (m.target.y - m.from.y) * fraction};
+        if (m.status == ParcelStatus::OnConveyor) {
+            m.opacity += dt * 8;
+            if (m.opacity > 1) {
+                m.opacity = 1;
+            }
+        } else if (fraction >= 1) {
+            m.opacity -= dt / Config::ParcelFadeSeconds;
+            if (m.opacity < 0) {
+                m.opacity = 0;
+            }
+        }
     }
     for (int i = 0; i < Config::PopupCount; ++i) {
-        if (popups[i].life <= 0) continue;
+        if (popups[i].life <= 0) {
+            continue;
+        }
         popups[i].life -= dt;
         popups[i].position.y -= 25 * dt;
     }
     for (int i = 0; i < Config::ParticleCount; ++i) {
         Particle& p = particles[i];
-        if (p.life <= 0) continue;
+        if (p.life <= 0) {
+            continue;
+        }
         p.life -= dt;
         p.position.x += p.velocity.x * dt;
         p.position.y += p.velocity.y * dt;
         p.velocity.y += 65 * dt;
     }
 }
-bool Game::run(int smokeFrames, const char* screenshot, const char* stateFile) {
+bool Game::run() {
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(Config::WindowWidth, Config::WindowHeight, "Parcel Panic: Conveyor Mayhem");
-    if (!IsWindowReady()) return false;
+    if (!IsWindowReady()) {
+        return false;
+    }
     Ui::loadFonts();
     SetExitKey(KEY_NULL);
     SetTargetFPS(Config::RenderFPS);
-    if (smokeFrames > 0) start(selectedLevel);
-    int frames = 0;
-    bool success = true;
-    while (!WindowShouldClose() && !quitting_) {
-        float dt = std::min(GetFrameTime(), Config::MaxFrameDelta);
+    while (!WindowShouldClose() && !quitting) {
+        float dt = GetFrameTime(); // Seconds since the last frame.
+        if (dt > Config::MaxFrameDelta) {
+            dt = Config::MaxFrameDelta;
+        }
         clock += dt;
         input();
         turnJunctions(dt);
@@ -225,7 +350,10 @@ bool Game::run(int smokeFrames, const char* screenshot, const char* stateFile) {
         // Advance animation up to each tick boundary before applying the next move.
         // This avoids a position jump when a frame crosses one or more ticks.
         while (remaining > 0 && screen == Screen::Playing && !paused && !demos.mode) {
-            float slice = std::min(remaining, Config::TickSeconds - accumulator);
+            float slice = Config::TickSeconds - accumulator;
+            if (slice > remaining) {
+                slice = remaining;
+            }
             effects(slice);
             accumulator += slice;
             remaining -= slice;
@@ -233,39 +361,19 @@ bool Game::run(int smokeFrames, const char* screenshot, const char* stateFile) {
                 accumulator = 0;
                 simulation.step();
                 syncParcels();
-                if (simulation.outcome != Outcome::Playing) screen = Screen::Results;
+                if (simulation.outcome != Outcome::Playing) {
+                    screen = Screen::Results;
+                }
             }
         }
-        if (remaining > 0) effects(remaining);
+        if (remaining > 0) {
+            effects(remaining);
+        }
         BeginDrawing();
         Renderer::draw(*this);
         EndDrawing();
-        // Optional local observation file; normal play does not write it.
-        if (stateFile) {
-            std::ofstream state(stateFile);
-            state << "{\"screen\":" << static_cast<int>(screen)
-                  << ",\"level\":" << simulation.level + 1 << ",\"tick\":" << simulation.tick
-                  << ",\"paused\":" << paused << ",\"demo\":" << demos.mode
-                  << ",\"demoStep\":" << demos.step << ",\"undoDepth\":" << simulation.conveyor.history.size()
-                  << ",\"brakeReady\":" << simulation.conveyor.brakeReady
-                  << ",\"junctionChoice\":" << simulation.conveyor.layout.cells[simulation.conveyor.layout.junctions[0]].choice
-                  << ",\"queueSize\":" << demos.queue.size() << ",\"heapSize\":" << demos.heap.size()
-                  << ",\"hashCapacity\":" << demos.table.getCapacity() << ",\"fontsReady\":" << Ui::fontsReady()
-                  << ",\"beltClock\":" << beltClock
-                  << ",\"parcelX\":" << motion[1].position.x << ",\"parcelY\":" << motion[1].position.y
-                  << ",\"junctionAngle\":" << junctionAngle[simulation.conveyor.layout.junctions[0]] << "}\n";
-        }
-        ++frames;
-        if (smokeFrames > 0 && frames >= smokeFrames) {
-            if (screenshot) {
-                Image capture = LoadImageFromScreen();
-                success = ExportImage(capture, screenshot);
-                UnloadImage(capture);
-            }
-            break;
-        }
     }
     Ui::unloadFonts();
     CloseWindow();
-    return success;
+    return true;
 }

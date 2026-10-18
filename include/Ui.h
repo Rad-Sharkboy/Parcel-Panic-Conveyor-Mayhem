@@ -5,25 +5,25 @@
 
 // Shared drawing helpers and button rectangles. Input uses the same rectangles.
 namespace Ui {
-constexpr Color Background{18, 25, 34, 255};
-constexpr Color Panel{29, 40, 52, 255};
-constexpr Color Raised{40, 54, 68, 255};
-constexpr Color Border{61, 78, 93, 255};
-constexpr Color White{241, 242, 230, 255};
-constexpr Color Muted{165, 183, 196, 255};
-constexpr Color Cyan{89, 214, 203, 255};
-constexpr Color Gold{247, 194, 91, 255};
-constexpr Rectangle Play{82, 340, 320, 56};
-constexpr Rectangle Select{82, 410, 320, 50};
-constexpr Rectangle Help{82, 474, 320, 50};
-constexpr Rectangle Quit{82, 538, 320, 50};
-constexpr Rectangle Back{70, 600, 220, 48};
-constexpr Rectangle Resume{895, 477, 151, 42};
-constexpr Rectangle Restart{1058, 477, 161, 42};
-constexpr Rectangle MainMenu{895, 529, 324, 38};
-constexpr Rectangle Retry{390, 440, 230, 52};
-constexpr Rectangle Next{650, 440, 230, 52};
-constexpr Rectangle ResultsMenu{520, 510, 230, 42};
+const Color Background{18, 25, 34, 255};
+const Color Panel{29, 40, 52, 255};
+const Color Raised{40, 54, 68, 255};
+const Color Border{61, 78, 93, 255};
+const Color White{241, 242, 230, 255};
+const Color Muted{165, 183, 196, 255};
+const Color Cyan{89, 214, 203, 255};
+const Color Gold{247, 194, 91, 255};
+const Rectangle Play{82, 340, 320, 56};
+const Rectangle Select{82, 410, 320, 50};
+const Rectangle Help{82, 474, 320, 50};
+const Rectangle Quit{82, 538, 320, 50};
+const Rectangle Back{70, 600, 220, 48};
+const Rectangle Resume{895, 477, 151, 42};
+const Rectangle Restart{1058, 477, 161, 42};
+const Rectangle MainMenu{895, 529, 324, 38};
+const Rectangle Retry{390, 440, 230, 52};
+const Rectangle Next{650, 440, 230, 52};
+const Rectangle ResultsMenu{520, 510, 230, 42};
 void loadFonts();
 void unloadFonts();
 bool fontsReady();
@@ -37,8 +37,9 @@ void meter(Rectangle bounds, float ratio, Color tint);
 void arrow(Vector2 position, float angle, float size, Color tint);
 Color destinationColor(Destination destination);
 const char* destinationLetter(Destination destination);
-void parcel(Vector2 position, Destination destination, ParcelKind kind, float opacity = 1.0f, float scale = 1.0f);
+void parcel(Vector2 position, Destination destination, ParcelKind kind, float opacity = 1.0f,
+            float scale = 1.0f);
 Rectangle levelCard(int index);
-}
+} // namespace Ui
 
 #endif

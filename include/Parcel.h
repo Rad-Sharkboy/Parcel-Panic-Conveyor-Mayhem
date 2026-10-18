@@ -1,6 +1,7 @@
 #ifndef PARCEL_H
 #define PARCEL_H // Prevent this header being included twice in the same source file.
 #include "Config.h"
+// Enums give numbers readable names: Destination::Red means the red destination.
 enum class Destination { Red, Blue, Yellow, Recycle };
 enum class ParcelKind { Normal, Express, Fragile, Damaged };
 enum class ParcelStatus { Created, Queued, OnConveyor, AtDock, Ready, Dispatched, Rejected, Broken, Expired };
@@ -17,8 +18,10 @@ struct Parcel {
     int eventCell = -1;
     int pointsAwarded = 0;
 };
+// inline allows this small shared function to be defined in a header.
 inline bool terminal(ParcelStatus s) {
-    return s == ParcelStatus::Dispatched || s == ParcelStatus::Rejected || s == ParcelStatus::Broken || s == ParcelStatus::Expired;
+    return s == ParcelStatus::Dispatched || s == ParcelStatus::Rejected || s == ParcelStatus::Broken ||
+           s == ParcelStatus::Expired;
 }
 
 #endif

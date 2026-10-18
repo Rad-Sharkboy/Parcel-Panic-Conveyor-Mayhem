@@ -21,7 +21,10 @@ struct LevelDefinition {
     int junctions[Config::MaxJunctions]{};
     int junctionCount = 0;
 };
-inline int cellAt(int x, int y) { return y * Config::Columns + x; }
+// Convert a grid column/row to one array index: row * width + column.
+inline int cellAt(int x, int y) {
+    return y * Config::Columns + x;
+}
 LevelDefinition makeLevel(int index);
 
 #endif

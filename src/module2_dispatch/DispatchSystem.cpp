@@ -1,47 +1,92 @@
 #include "DispatchSystem.h"
-#include <algorithm>
-int DispatchSystem::multiplier() const { return std::min(Config::MaxMultiplier, 1 + streak / Config::ComboStep); }
+int DispatchSystem::multiplier() const {
+    int result = 1 + streak / Config::ComboStep;
+    if (result > Config::MaxMultiplier) {
+        result = Config::MaxMultiplier;
+    }
+    return result;
+}
 void DispatchSystem::reset() {
-    registry.clear(); ready.clear(); nextSequence = 0; nextLoadTick = 0;
-    score = streak = delivered = failed = 0; lastEventTick = -100; lastEventId = lastPoints = 0;
+    registry.clear();
+    ready.clear();
+    nextSequence = 0;
+    nextLoadTick = 0;
+    score = streak = delivered = failed = 0;
+    lastEventTick = -100;
+    lastEventId = lastPoints = 0;
 }
 void DispatchSystem::fail(int id, ParcelStatus reason, int tick) {
-    Parcel* p = registry.find(id);
-    if (!p || terminal(p->status)) return;
-    if (p->cell >= 0) p->eventCell = p->cell;
-    p->pointsAwarded = -Config::PenaltyPoints;
-    p->status = reason; p->cell = -1; ++failed; streak = 0;
-    score = std::max(0, score - Config::PenaltyPoints);
-    lastEventTick = tick; lastEventId = id; lastPoints = -Config::PenaltyPoints;
+    Parcel* parcel = registry.find(id);
+    if (!parcel || terminal(parcel->status)) {
+        return;
+    }
+    if (parcel->cell >= 0) {
+        parcel->eventCell = parcel->cell;
+    }
+    parcel->pointsAwarded = -Config::PenaltyPoints;
+    parcel->status = reason;
+    parcel->cell = -1;
+    ++failed;
+    streak = 0;
+    score -= Config::PenaltyPoints;
+    if (score < 0) {
+        score = 0;
+    }
+    lastEventTick = tick;
+    lastEventId = id;
+    lastPoints = -Config::PenaltyPoints;
 }
 void DispatchSystem::arrive(int id, Destination dock, int tick) {
-    Parcel* p = registry.find(id);
-    if (!p || p->status != ParcelStatus::OnConveyor) return;
-    p->eventCell = p->cell;
-    p->status = ParcelStatus::AtDock; p->cell = -1;
-    if (p->destination != dock) { fail(id, ParcelStatus::Rejected, tick); return; }
-    p->status = ParcelStatus::Ready; ready.insert({id, p->deadline, nextSequence++});
+    Parcel* parcel = registry.find(id);
+    if (!parcel || parcel->status != ParcelStatus::OnConveyor) {
+        return;
+    }
+    parcel->eventCell = parcel->cell;
+    parcel->status = ParcelStatus::AtDock;
+    parcel->cell = -1;
+    if (parcel->destination != dock) {
+        fail(id, ParcelStatus::Rejected, tick);
+        return;
+    }
+    parcel->status = ParcelStatus::Ready;
+    ready.insert({id, parcel->deadline, nextSequence++});
 }
 void DispatchSystem::update(int tick, int interval) {
     for (int i = 0; i < registry.getCapacity(); ++i) {
-        const Bucket& b = registry.getBucket(i);
-        if (b.state == BucketState::Occupied && !terminal(b.parcel.status) && tick > b.parcel.deadline) fail(b.parcel.id, ParcelStatus::Expired, tick);
+        const Bucket& bucket = registry.getBucket(i);
+        if (bucket.state == BucketState::Occupied && !terminal(bucket.parcel.status) &&
+            tick > bucket.parcel.deadline) {
+            fail(bucket.parcel.id, ParcelStatus::Expired, tick);
+        }
     }
-    if (tick < nextLoadTick) return;
+    if (tick < nextLoadTick) {
+        return;
+    }
     HeapEntry entry;
     while (ready.extract(entry)) {
-        Parcel* p = registry.find(entry.id);
-        if (!p || p->status != ParcelStatus::Ready) continue;
-        p->status = ParcelStatus::Dispatched; ++delivered; ++streak;
-        lastPoints = (p->kind == ParcelKind::Damaged ? Config::RecyclePoints : Config::BasePoints) * multiplier();
-        p->pointsAwarded = lastPoints;
-        score += lastPoints; lastEventTick = tick; lastEventId = p->id;
+        Parcel* parcel = registry.find(entry.id);
+        if (!parcel || parcel->status != ParcelStatus::Ready) {
+            continue;
+        }
+        parcel->status = ParcelStatus::Dispatched;
+        ++delivered;
+        ++streak;
+        lastPoints =
+            (parcel->kind == ParcelKind::Damaged ? Config::RecyclePoints : Config::BasePoints) * multiplier();
+        parcel->pointsAwarded = lastPoints;
+        score += lastPoints;
+        lastEventTick = tick;
+        lastEventId = parcel->id;
         nextLoadTick = tick + interval;
         // An express dispatch gives queued/active parcels a small deadline extension.
-        if (p->kind == ParcelKind::Express) {
+        if (parcel->kind == ParcelKind::Express) {
             for (int i = 0; i < registry.getCapacity(); ++i) {
-                const Bucket& b = registry.getBucket(i);
-                if (b.state == BucketState::Occupied && (b.parcel.status == ParcelStatus::Queued || b.parcel.status == ParcelStatus::OnConveyor)) registry.find(b.parcel.id)->deadline += Config::ExpressBonusTicks;
+                const Bucket& bucket = registry.getBucket(i);
+                if (bucket.state == BucketState::Occupied &&
+                    (bucket.parcel.status == ParcelStatus::Queued ||
+                     bucket.parcel.status == ParcelStatus::OnConveyor)) {
+                    registry.find(bucket.parcel.id)->deadline += Config::ExpressBonusTicks;
+                }
             }
         }
         break;

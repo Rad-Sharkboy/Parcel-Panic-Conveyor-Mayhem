@@ -1,76 +1,76 @@
 // === TUNING & CONFIGURATION CONSTANTS ===
 #ifndef CONFIG_H
 #define CONFIG_H // Prevent this header being included twice in the same source file.
+// Config:: groups the game settings under one name. const means the value stays fixed.
 namespace Config {
-constexpr int WindowWidth = 1280;
-constexpr int WindowHeight = 720;
-constexpr int RenderFPS = 60;
-constexpr float MaxFrameDelta = 0.1f;
-constexpr int Columns = 17;
-constexpr int Rows = 11;
-constexpr int Cells = Columns * Rows;
-constexpr int Tile = 48;
-constexpr int BoardX = 28;
-constexpr int BoardY = 140;
-constexpr int InputCapacity = 8;
-constexpr int HeapCapacity = 8;
-constexpr int HashCapacity = 17;
-constexpr int MaxInputs = 4;
-constexpr int MaxJunctions = 10;
-constexpr int Levels = 4;
-constexpr float TickSeconds = 0.22f;
-constexpr int BrakeTicks = 12;
-constexpr int BrakeCooldown = 32;
-constexpr int DeadlineTicks = 150;
-constexpr int ExpressDeadlineTicks = 85;
-constexpr int ExpressBonusTicks = 8;
-constexpr int BasePoints = 100;
-constexpr int RecyclePoints = 55;
-constexpr int PenaltyPoints = 40;
-constexpr int ComboStep = 3;
-constexpr int MaxMultiplier = 5;
-constexpr int JamLimit = 100;
-constexpr int JamRise = 2;
-constexpr int JamBlockedThreshold = 4;
-constexpr int JamRecovery = 3;
-constexpr int RushPeriod = 100;
-constexpr int RushDuration = 25;
-constexpr int RushWarning = 15;
-constexpr int RushSpawnDivisor = 2;
-constexpr int RushMinSpawnTicks = 2;
-constexpr int DamagedPeriod = 11;
-constexpr int DamagedOffset = 5;
-constexpr int FragilePeriod = 5;
-constexpr int FragileOffset = 2;
-constexpr int ExpressPeriod = 4;
-constexpr int ExpressOffset = 1;
-constexpr int MaxLevelTicks = 1800;
-constexpr int DemoCapacity = 6;
-constexpr int ParticleCount = 80;
-constexpr int PopupCount = 16;
-constexpr float ParcelTravelFraction = 0.82f;
-constexpr float ParcelFadeSeconds = 0.24f;
-constexpr float PopupSeconds = 1.2f;
-constexpr float ParticleSeconds = 0.6f;
-constexpr float JunctionTurnSpeed = 10.0f;
-constexpr float LevelTitleSeconds = 2.5f;
-constexpr float BeltPixelsPerSecond = 22.0f;
-constexpr float BeltRibSpacing = 12.0f;
-struct LevelTuning { int total, quota, target, spawnTicks, moveTicks, loaderTicks, colors; bool specials, rush; };
-constexpr LevelTuning LevelsTuning[Levels] = {
-    {20, 12, 1200, 12, 3, 4, 2, false, false},
-    {38, 23, 2300, 8, 2, 5, 3, false, true},
-    {48, 29, 2800, 8, 2, 6, 3, true, true},
-    {60, 36, 3600, 6, 2, 8, 3, true, true}
+const int WindowWidth = 1280;
+const int WindowHeight = 720;
+const int RenderFPS = 60;
+const float MaxFrameDelta = 0.1f;
+const int Columns = 17;
+const int Rows = 11;
+const int Cells = Columns * Rows;
+const int Tile = 48;
+const int BoardX = 28;
+const int BoardY = 140;
+const int InputCapacity = 8;
+const int HeapCapacity = 8;
+const int HashCapacity = 17;
+const int MaxInputs = 4;
+const int MaxJunctions = 10;
+const int Levels = 4;
+const float TickSeconds = 0.22f;
+const int BrakeTicks = 12;
+const int BrakeCooldown = 32;
+const int DeadlineTicks = 150;
+const int ExpressDeadlineTicks = 85;
+const int ExpressBonusTicks = 8;
+const int BasePoints = 100;
+const int RecyclePoints = 55;
+const int PenaltyPoints = 40;
+const int ComboStep = 3;
+const int MaxMultiplier = 5;
+const int JamLimit = 100;
+const int JamRise = 2;
+const int JamBlockedThreshold = 4;
+const int JamRecovery = 3;
+const int RushPeriod = 100;
+const int RushDuration = 25;
+const int RushWarning = 15;
+const int RushSpawnDivisor = 2;
+const int RushMinSpawnTicks = 2;
+const int DamagedPeriod = 11;
+const int DamagedOffset = 5;
+const int FragilePeriod = 5;
+const int FragileOffset = 2;
+const int ExpressPeriod = 4;
+const int ExpressOffset = 1;
+const int MaxLevelTicks = 1800;
+const int DemoCapacity = 6;
+const int ParticleCount = 80;
+const int PopupCount = 16;
+const float ParcelTravelFraction = 0.82f;
+const float ParcelFadeSeconds = 0.24f;
+const float PopupSeconds = 1.2f;
+const float ParticleSeconds = 0.6f;
+const float JunctionTurnSpeed = 10.0f;
+const float LevelTitleSeconds = 2.5f;
+const float BeltPixelsPerSecond = 22.0f;
+const float BeltRibSpacing = 12.0f;
+struct LevelTuning {
+    int total, quota, target, spawnTicks, moveTicks, loaderTicks, colors;
+    bool specials, rush;
 };
-constexpr int largestLevel() {
-    int maximum = 0;
-    for (int i = 0; i < Levels; ++i) if (LevelsTuning[i].total > maximum) maximum = LevelsTuning[i].total;
-    return maximum;
-}
-constexpr int MaxParcels = largestLevel();
-static_assert(TickSeconds > 0 && InputCapacity > 0 && HeapCapacity > 0 && HashCapacity > 0, "Capacities and tick duration must be positive");
-static_assert(DamagedPeriod > 0 && FragilePeriod > 0 && ExpressPeriod > 0 && RushSpawnDivisor > 0, "Periods must be positive");
-}
+const int Level1Parcels = 20;
+const int Level2Parcels = 38;
+const int Level3Parcels = 48;
+const int Level4Parcels = 60;
+const LevelTuning LevelsTuning[Levels] = {{Level1Parcels, 12, 1200, 12, 3, 4, 2, false, false},
+                                          {Level2Parcels, 23, 2300, 8, 2, 5, 3, false, true},
+                                          {Level3Parcels, 29, 2800, 8, 2, 6, 3, true, true},
+                                          {Level4Parcels, 36, 3600, 6, 2, 8, 3, true, true}};
+// Level 4 has the most parcels; use its total for the visual arrays too.
+const int MaxParcels = Level4Parcels;
+} // namespace Config
 
 #endif

@@ -7,15 +7,15 @@ void ConveyorSystem::reset(int level) {
     history.clear();
     blocked = brakeReady = 0;
 }
-bool ConveyorSystem::switchJunction(int cell, bool planning) {
-    if (cell < 0 || cell >= Config::Cells || layout.cells[cell].kind != CellKind::Junction) {
+bool ConveyorSystem::switchJunction(int cellIndex, bool planning) {
+    if (cellIndex < 0 || cellIndex >= Config::Cells || layout.cells[cellIndex].kind != CellKind::Junction) {
         return false;
     }
-    Cell& c = layout.cells[cell];
+    Cell& cell = layout.cells[cellIndex];
     if (planning) {
-        history.push({cell, c.choice});
+        history.push({cellIndex, cell.choice});
     }
-    c.choice = 1 - c.choice;
+    cell.choice = 1 - cell.choice;
     return true;
 }
 bool ConveyorSystem::undo() {
@@ -41,8 +41,8 @@ void ConveyorSystem::feed(HashTable& registry, int tick) {
         int id = 0;
         while (!inputs[i].isEmpty()) {
             id = inputs[i].peek();
-            Parcel* p = registry.find(id);
-            if (p && p->status == ParcelStatus::Queued) {
+            Parcel* parcel = registry.find(id);
+            if (parcel && parcel->status == ParcelStatus::Queued) {
                 break;
             }
             inputs[i].dequeue();
@@ -51,14 +51,14 @@ void ConveyorSystem::feed(HashTable& registry, int tick) {
             continue;
         }
         id = inputs[i].dequeue();
-        Parcel* p = registry.find(id);
-        if (!p) {
+        Parcel* parcel = registry.find(id);
+        if (!parcel) {
             continue;
         }
         cell.parcel = id;
-        p->status = ParcelStatus::OnConveyor;
-        p->cell = p->previousCell = layout.inputs[i];
-        p->movedTick = tick;
+        parcel->status = ParcelStatus::OnConveyor;
+        parcel->cell = parcel->previousCell = layout.inputs[i];
+        parcel->movedTick = tick;
     }
 }
 void ConveyorSystem::move(HashTable& registry, DispatchSystem& dispatch, int tick) {
@@ -66,12 +66,12 @@ void ConveyorSystem::move(HashTable& registry, DispatchSystem& dispatch, int tic
     bool claimed[Config::Cells]{};
     blocked = 0;
     for (int i = 0; i < Config::Cells; ++i) {
-        Cell& c = layout.cells[i];
-        const Parcel* p = registry.find(c.parcel);
-        if (c.parcel && (!p || p->status != ParcelStatus::OnConveyor)) {
-            c.parcel = 0;
+        Cell& cell = layout.cells[i];
+        const Parcel* parcel = registry.find(cell.parcel);
+        if (cell.parcel && (!parcel || parcel->status != ParcelStatus::OnConveyor)) {
+            cell.parcel = 0;
         }
-        occupancy[i] = c.parcel;
+        occupancy[i] = cell.parcel;
     }
     // Rotating scan gives each merge branch a deterministic chance to enter.
     for (int offset = 0; offset < Config::Cells; ++offset) {
@@ -79,17 +79,17 @@ void ConveyorSystem::move(HashTable& registry, DispatchSystem& dispatch, int tic
         if (!occupancy[i]) {
             continue;
         }
-        Cell& c = layout.cells[i];
-        Parcel* p = registry.find(occupancy[i]);
-        if (c.brakeUntil > tick) {
+        Cell& cell = layout.cells[i];
+        Parcel* parcel = registry.find(occupancy[i]);
+        if (cell.brakeUntil > tick) {
             continue;
         }
-        if (c.kind == CellKind::Dock) {
-            c.parcel = 0;
-            dispatch.arrive(p->id, c.dock, tick);
+        if (cell.kind == CellKind::Dock) {
+            cell.parcel = 0;
+            dispatch.arrive(parcel->id, cell.dock, tick);
             continue;
         }
-        int target = c.next[c.kind == CellKind::Junction ? c.choice : 0];
+        int target = cell.next[cell.kind == CellKind::Junction ? cell.choice : 0];
         if (target < 0 || target >= Config::Cells || layout.cells[target].kind == CellKind::Empty) {
             ++blocked;
             continue;
@@ -99,15 +99,15 @@ void ConveyorSystem::move(HashTable& registry, DispatchSystem& dispatch, int tic
             continue;
         }
         claimed[target] = true;
-        c.parcel = 0;
-        Cell& next = layout.cells[target];
-        next.parcel = p->id;
-        p->previousCell = i;
-        p->cell = target;
-        p->movedTick = tick;
-        if (next.kind == CellKind::Hazard && p->kind == ParcelKind::Fragile) {
-            next.parcel = 0;
-            dispatch.fail(p->id, ParcelStatus::Broken, tick);
+        cell.parcel = 0;
+        Cell& nextCell = layout.cells[target];
+        nextCell.parcel = parcel->id;
+        parcel->previousCell = i;
+        parcel->cell = target;
+        parcel->movedTick = tick;
+        if (nextCell.kind == CellKind::Hazard && parcel->kind == ParcelKind::Fragile) {
+            nextCell.parcel = 0;
+            dispatch.fail(parcel->id, ParcelStatus::Broken, tick);
         }
     }
 }
