@@ -226,15 +226,15 @@ void Renderer::dashboard(const Game& g) {
     if (g.hud) {
         const CircularQueue& queue = conveyor.inputs[0];
         text("Input queue 1", 895, 265, 18, White, true);
-        text(TextFormat("%i / %i", queue.size(), queue.capacity()), 1172, 265, 18, Cyan);
-        float slotWidth = 324.0f / queue.capacity();
-        for (int i = 0; i < queue.capacity(); ++i) {
+        text(TextFormat("%i / %i", queue.size(), queue.getCapacity()), 1172, 265, 18, Cyan);
+        float slotWidth = 324.0f / queue.getCapacity();
+        for (int i = 0; i < queue.getCapacity(); ++i) {
             Rectangle slot{895 + i * slotWidth, 297, slotWidth - 5, 31};
-            box(slot, queue.slot(i) ? Raised : Background);
-            centered(queue.slot(i) ? TextFormat("%i", queue.slot(i)) : "-", slot, 16, queue.slot(i) ? White : Muted);
-            if (i == queue.front()) DrawRectangleRec({slot.x, slot.y + 30, slot.width, 2}, Cyan);
+            box(slot, queue.getSlot(i) ? Raised : Background);
+            centered(queue.getSlot(i) ? TextFormat("%i", queue.getSlot(i)) : "-", slot, 16, queue.getSlot(i) ? White : Muted);
+            if (i == queue.getFront()) DrawRectangleRec({slot.x, slot.y + 30, slot.width, 2}, Cyan);
         }
-        text(TextFormat("Front %i   Rear %i   (next write)", queue.front(), queue.rear()), 895, 338, 15, Muted);
+        text(TextFormat("Front %i   Rear %i   (last insert)", queue.getFront(), queue.getRear()), 895, 338, 15, Muted);
         HeapEntry root;
         bool hasRoot = s.dispatch.ready.peek(root);
         text("Dispatch heap", 895, 370, 18, White, true);
@@ -261,7 +261,8 @@ void Renderer::dashboard(const Game& g) {
         text("UP NEXT", 895, 482, 13, Muted, true);
         for (int i = 0; i < conveyor.layout.inputCount; ++i) {
             int id = 0;
-            bool has = conveyor.inputs[i].peek(id);
+            id = conveyor.inputs[i].peek();
+            bool has = id != -1;
             const Parcel* p = has ? s.dispatch.registry.find(id) : nullptr;
             text(TextFormat("IN %i", i + 1), 895, 508 + i * 24.0f, 15, Muted);
             text(p ? TextFormat("#%i   %s  %s", id, destinationLetter(p->destination), p->kind == ParcelKind::Fragile ? "Fragile" : p->kind == ParcelKind::Express ? "Express" : p->kind == ParcelKind::Damaged ? "Recycle" : "Normal") : "Lane clear", 946, 508 + i * 24.0f, 16, p ? destinationColor(p->destination) : White);

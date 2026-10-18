@@ -14,7 +14,7 @@ bool Simulation::spawn() {
     const Config::LevelTuning& t = conveyor.layout.tuning;
     if (generated >= t.total) return false;
     int lane = generated % conveyor.layout.inputCount;
-    if (conveyor.inputs[lane].size() == conveyor.inputs[lane].capacity()) return false;
+    if (conveyor.inputs[lane].size() == conveyor.inputs[lane].getCapacity()) return false;
     Parcel p; p.id = generated + 1; p.destination = static_cast<Destination>(generated % t.colors);
     if (t.specials) {
         if (generated % Config::DamagedPeriod == Config::DamagedOffset) { p.kind = ParcelKind::Damaged; p.destination = Destination::Recycle; }
@@ -49,7 +49,7 @@ bool Simulation::validate() const {
     for (int lane = 0; lane < conveyor.layout.inputCount; ++lane) {
         const CircularQueue& q = conveyor.inputs[lane];
         for (int position = 0; position < q.size(); ++position) {
-            int id = q.slot((q.front() + position) % q.capacity());
+            int id = q.getSlot((q.getFront() + position) % q.getCapacity());
             const Parcel* p = dispatch.registry.find(id);
             if (!p || id < 1 || id > Config::MaxParcels) return false;
             if (terminal(p->status)) continue;

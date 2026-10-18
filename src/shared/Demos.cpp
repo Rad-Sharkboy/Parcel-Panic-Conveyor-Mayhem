@@ -8,10 +8,10 @@ void Demos::advance() {
         int id = 0;
         if (step < 6) { queue.enqueue(101 + step); event = "enqueue #" + std::to_string(101 + step); }
         else if (step == 6) event = queue.enqueue(999) ? "enqueue succeeded" : "enqueue #999 rejected: FULL (state unchanged)";
-        else if (step < 9) { queue.dequeue(id); event = "dequeue #" + std::to_string(id); }
-        else if (step < 11) { queue.enqueue(107 + step - 9); event = "enqueue wraps rear to slot " + std::to_string(queue.rear()); }
-        else if (step < 17) { queue.dequeue(id); event = "dequeue #" + std::to_string(id); }
-        else if (step == 17) event = queue.dequeue(id) ? "dequeue succeeded" : "dequeue rejected: EMPTY (state unchanged)";
+        else if (step < 9) { id = queue.dequeue(); event = "dequeue #" + std::to_string(id); }
+        else if (step < 11) { queue.enqueue(107 + step - 9); event = "enqueue wraps rear to slot " + std::to_string(queue.getRear()); }
+        else if (step < 17) { id = queue.dequeue(); event = "dequeue #" + std::to_string(id); }
+        else if (step == 17) event = queue.dequeue() != -1 ? "dequeue succeeded" : "dequeue rejected: EMPTY (state unchanged)";
         else { open(1); return; }
     } else if (mode == 2) {
         const int deadlines[6] = {90, 30, 60, 30, 10, 50};

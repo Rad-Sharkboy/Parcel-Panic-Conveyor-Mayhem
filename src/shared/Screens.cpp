@@ -144,14 +144,14 @@ void Renderer::demonstration(const Game& g) {
     DrawLine(90, 190, 1188, 190, Border);
     if (d.mode == 1) {
         const CircularQueue& queue = d.queue;
-        text(TextFormat("Size %i / %i     Front %i     Rear %i (next write)", queue.size(), queue.capacity(), queue.front(), queue.rear()), 90, 219, 24);
-        for (int i = 0; i < queue.capacity(); ++i) {
+        text(TextFormat("Size %i / %i     Front %i     Rear %i (last insert)", queue.size(), queue.getCapacity(), queue.getFront(), queue.getRear()), 90, 219, 24);
+        for (int i = 0; i < queue.getCapacity(); ++i) {
             Rectangle slot{100 + i * 180.0f, 306, 158, 108};
-            box(slot, queue.slot(i) ? Raised : Background);
+            box(slot, queue.getSlot(i) ? Raised : Background);
             text(TextFormat("SLOT %i", i), slot.x + 18, slot.y + 14, 14, Muted, true);
-            centered(queue.slot(i) ? TextFormat("#%i", queue.slot(i)) : "empty", {slot.x, slot.y + 37, slot.width, 61}, 28, queue.slot(i) ? Gold : Muted);
-            if (i == queue.front()) centered("FRONT", {slot.x, 433, slot.width, 24}, 16, Cyan, true);
-            if (i == queue.rear()) centered("REAR", {slot.x, 462, slot.width, 24}, 16, Gold, true);
+            centered(queue.getSlot(i) ? TextFormat("#%i", queue.getSlot(i)) : "empty", {slot.x, slot.y + 37, slot.width, 61}, 28, queue.getSlot(i) ? Gold : Muted);
+            if (i == queue.getFront()) centered("FRONT", {slot.x, 433, slot.width, 24}, 16, Cyan, true);
+            if (i == queue.getRear()) centered("REAR", {slot.x, 462, slot.width, 24}, 16, Gold, true);
         }
         text("Fixed-capacity array. Enqueue and dequeue take O(1); indices wrap with modulo.", 90, 527, 19, Muted);
     } else if (d.mode == 2) {

@@ -1,20 +1,36 @@
 #ifndef COMMANDSTACK_H
-#define COMMANDSTACK_H // Prevent this header being included twice in the same source file.
-struct SwitchCommand { int cell; int oldChoice; };
+#define COMMANDSTACK_H // Prevent duplicate declarations when headers include each other.
+
+struct SwitchCommand {
+    int cell = -1;
+    int oldChoice = 0;
+};
+
+struct StackNode {
+    SwitchCommand data;
+    StackNode* next;
+};
+
+// A linked stack: push inserts at the head; pop removes the head (Lab 05).
 class CommandStack {
-    struct Node { SwitchCommand command; Node* next; };
-    Node* top_ = nullptr; int size_ = 0;
+private:
+    StackNode* top;
+    int count;
+    void copyFrom(const CommandStack& other);
+
 public:
-    CommandStack() = default;
+    CommandStack();
     ~CommandStack();
-    CommandStack(const CommandStack&) = delete;
-    CommandStack& operator=(const CommandStack&) = delete;
-    // Record reversible planning edit in O(1).
+    CommandStack(const CommandStack& other);
+    CommandStack& operator=(const CommandStack& other);
+
+    bool isEmpty() const;
+    // Save a switch's old choice at the top. O(1).
     void push(SwitchCommand command);
-    // Restore most recent edit into output; false if empty, O(1).
-    bool pop(SwitchCommand& output);
+    // Remove/return the newest command. cell is -1 if empty. O(1).
+    SwitchCommand pop();
     void clear();
-    int size() const { return size_; }
+    int size() const { return count; }
 };
 
 #endif

@@ -1,24 +1,40 @@
 #ifndef CIRCULARQUEUE_H
-#define CIRCULARQUEUE_H // Prevent this header being included twice in the same source file.
+#define CIRCULARQUEUE_H // Prevent duplicate declarations when headers include each other.
+
 #include "Config.h"
+
+// Same circular-array pattern as the field manual. Only parcel IDs go in this queue.
 class CircularQueue {
-    int* values_; int front_ = 0, rear_ = 0, size_ = 0, capacity_;
+private:
+    int* arr;
+    int front;
+    int rear;
+    int capacity;
+    int count;
+
 public:
-    explicit CircularQueue(int capacity = Config::InputCapacity);
+    CircularQueue(int capacity = Config::InputCapacity);
     ~CircularQueue();
-    CircularQueue(const CircularQueue&) = delete;
-    CircularQueue& operator=(const CircularQueue&) = delete;
-    // Insert ID; false when full. No allocation, O(1).
+
+    // Lab 01: deep copies give each queue its own array instead of sharing a pointer.
+    CircularQueue(const CircularQueue& other);
+    CircularQueue& operator=(const CircularQueue& other);
+
+    bool isEmpty() const;
+    bool isFull() const;
+    // Add an ID at rear. Returns false if full. O(1).
     bool enqueue(int id);
-    // Remove oldest ID into output; false when empty, O(1).
-    bool dequeue(int& output);
-    bool peek(int& output) const;
+    // Remove/return the front ID, or -1 if empty. O(1).
+    int dequeue();
+    // Read the front ID without removing it, or -1 if empty. O(1).
+    int peek() const;
     void clear();
-    int size() const { return size_; }
-    int capacity() const { return capacity_; }
-    int front() const { return front_; }
-    int rear() const { return rear_; }
-    int slot(int i) const { return values_[i]; }
+
+    int size() const { return count; }
+    int getCapacity() const { return capacity; }
+    int getFront() const { return front; }
+    int getRear() const { return rear; }
+    int getSlot(int index) const { return arr[index]; }
 };
 
 #endif
