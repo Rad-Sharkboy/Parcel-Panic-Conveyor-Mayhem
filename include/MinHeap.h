@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MINHEAP_H
+#define MINHEAP_H // Prevent this header being included twice in the same source file.
 #include "Config.h"
 struct HeapEntry { int id = 0; int deadline = 0; unsigned long long sequence = 0; };
 class MinHeap {
@@ -19,3 +20,5 @@ public:
     int capacity() const { return capacity_; }
     const HeapEntry& at(int i) const { return entries_[i]; }
 };
+
+#endif

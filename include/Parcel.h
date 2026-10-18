@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PARCEL_H
+#define PARCEL_H // Prevent this header being included twice in the same source file.
 #include "Config.h"
 enum class Destination { Red, Blue, Yellow, Recycle };
 enum class ParcelKind { Normal, Express, Fragile, Damaged };
@@ -19,3 +20,5 @@ struct Parcel {
 inline bool terminal(ParcelStatus s) {
     return s == ParcelStatus::Dispatched || s == ParcelStatus::Rejected || s == ParcelStatus::Broken || s == ParcelStatus::Expired;
 }
+
+#endif

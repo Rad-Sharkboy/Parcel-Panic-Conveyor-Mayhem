@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UI_H
+#define UI_H // Prevent this header being included twice in the same source file.
 #include "raylib.h"
 #include "Parcel.h"
 
@@ -39,3 +40,5 @@ const char* destinationLetter(Destination destination);
 void parcel(Vector2 position, Destination destination, ParcelKind kind, float opacity = 1.0f, float scale = 1.0f);
 Rectangle levelCard(int index);
 }
+
+#endif

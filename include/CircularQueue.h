@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CIRCULARQUEUE_H
+#define CIRCULARQUEUE_H // Prevent this header being included twice in the same source file.
 #include "Config.h"
 class CircularQueue {
     int* values_; int front_ = 0, rear_ = 0, size_ = 0, capacity_;
@@ -19,3 +20,5 @@ public:
     int rear() const { return rear_; }
     int slot(int i) const { return values_[i]; }
 };
+
+#endif

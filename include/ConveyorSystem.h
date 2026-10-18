@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CONVEYORSYSTEM_H
+#define CONVEYORSYSTEM_H // Prevent this header being included twice in the same source file.
 #include "Level.h"
 #include "CircularQueue.h"
 #include "CommandStack.h"
@@ -18,3 +19,5 @@ public:
     void move(HashTable& registry, DispatchSystem& dispatch, int tick);
     void feed(HashTable& registry, int tick);
 };
+
+#endif

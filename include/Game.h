@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GAME_H
+#define GAME_H // Prevent this header being included twice in the same source file.
 #include "Simulation.h"
 #include "Demos.h"
 #include "raylib.h"
@@ -39,3 +40,5 @@ public:
     void start(int level);
     bool run(int smokeFrames = 0, const char* screenshot = nullptr, const char* stateFile = nullptr);
 };
+
+#endif

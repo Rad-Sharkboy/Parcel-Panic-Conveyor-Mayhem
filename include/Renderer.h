@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RENDERER_H
+#define RENDERER_H // Prevent this header being included twice in the same source file.
 #include "Game.h"
 class Renderer {
 public:
@@ -12,3 +13,5 @@ private:
     static void demonstration(const Game& game);
     static void results(const Game& game);
 };
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DEMOS_H
+#define DEMOS_H // Prevent this header being included twice in the same source file.
 #include "CircularQueue.h"
 #include "MinHeap.h"
 #include "HashTable.h"
@@ -13,3 +14,5 @@ public:
     void open(int which);
     void advance();
 };
+
+#endif

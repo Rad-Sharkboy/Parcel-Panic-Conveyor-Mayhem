@@ -1,4 +1,5 @@
-#pragma once
+#ifndef COMMANDSTACK_H
+#define COMMANDSTACK_H // Prevent this header being included twice in the same source file.
 struct SwitchCommand { int cell; int oldChoice; };
 class CommandStack {
     struct Node { SwitchCommand command; Node* next; };
@@ -15,3 +16,5 @@ public:
     void clear();
     int size() const { return size_; }
 };
+
+#endif

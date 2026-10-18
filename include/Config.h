@@ -1,5 +1,6 @@
 // === TUNING & CONFIGURATION CONSTANTS ===
-#pragma once
+#ifndef CONFIG_H
+#define CONFIG_H // Prevent this header being included twice in the same source file.
 namespace Config {
 constexpr int WindowWidth = 1280;
 constexpr int WindowHeight = 720;
@@ -71,3 +72,5 @@ constexpr int MaxParcels = largestLevel();
 static_assert(TickSeconds > 0 && InputCapacity > 0 && HeapCapacity > 0 && HashCapacity > 0, "Capacities and tick duration must be positive");
 static_assert(DamagedPeriod > 0 && FragilePeriod > 0 && ExpressPeriod > 0 && RushSpawnDivisor > 0, "Periods must be positive");
 }
+
+#endif

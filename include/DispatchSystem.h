@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DISPATCHSYSTEM_H
+#define DISPATCHSYSTEM_H // Prevent this header being included twice in the same source file.
 #include "HashTable.h"
 #include "MinHeap.h"
 class DispatchSystem {
@@ -19,3 +20,5 @@ public:
     void update(int tick, int interval);
     int multiplier() const;
 };
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SIMULATION_H
+#define SIMULATION_H // Prevent this header being included twice in the same source file.
 #include "ConveyorSystem.h"
 enum class Outcome { Playing, Won, Lost };
 class Simulation {
@@ -17,3 +18,5 @@ public:
     // Deterministic parcel creation through the real input queues; false when buffer is full.
     bool spawn();
 };
+
+#endif

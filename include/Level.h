@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LEVEL_H
+#define LEVEL_H // Prevent this header being included twice in the same source file.
 #include "Config.h"
 #include "Parcel.h"
 enum class CellKind { Empty, Belt, Junction, Dock, Hazard };
@@ -22,3 +23,5 @@ struct LevelDefinition {
 };
 inline int cellAt(int x, int y) { return y * Config::Columns + x; }
 LevelDefinition makeLevel(int index);
+
+#endif

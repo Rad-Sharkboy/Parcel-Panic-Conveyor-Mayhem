@@ -1,4 +1,5 @@
-#pragma once
+#ifndef HASHTABLE_H
+#define HASHTABLE_H // Prevent this header being included twice in the same source file.
 #include "Parcel.h"
 enum class BucketState { Empty, Occupied, Tombstone };
 struct Bucket { Parcel parcel; BucketState state = BucketState::Empty; };
@@ -25,3 +26,5 @@ public:
     int capacity() const { return capacity_; }
     const Bucket& bucket(int i) const { return buckets_[i]; }
 };
+
+#endif
