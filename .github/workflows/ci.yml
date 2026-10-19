@@ -1,8 +1,14 @@
 name: Windows build
 on:
   push:
+    branches: ['**']
+    tags: ['v*-dev.*']
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   windows:
     runs-on: windows-latest
@@ -23,11 +29,38 @@ jobs:
       - name: Build the game
         shell: cmd
         run: build.bat
-      - name: Save the Windows game
+      - name: Package the game and fonts
+        shell: pwsh
+        run: |
+          $package = "dist/ParcelPanic"
+          New-Item -ItemType Directory -Force $package | Out-Null
+          Copy-Item "build/ParcelPanic.exe" $package
+          Copy-Item "build/assets" $package -Recurse
+          Copy-Item "docs/PLAY.txt" "$package/Read me.txt"
+          Compress-Archive -Path $package -DestinationPath "dist/ParcelPanic-Windows-x64.zip"
+      - name: Save the Windows download
         uses: actions/upload-artifact@v4
         with:
           name: ParcelPanic-Windows-x64
-          path: |
-            build/ParcelPanic.exe
-            build/assets/
+          path: dist/ParcelPanic-Windows-x64.zip
           if-no-files-found: error
+
+  development-release:
+    if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-dev.')
+    needs: windows
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ParcelPanic-Windows-x64
+          path: dist
+      - name: Publish the development download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: pwsh
+        run: gh release create "$env:RELEASE_TAG" dist/ParcelPanic-Windows-x64.zip --verify-tag --prerelease --title "Parcel Panic $env:RELEASE_TAG" --notes-file .github/DEVELOPMENT_RELEASE.md
