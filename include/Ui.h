@@ -38,6 +38,7 @@ void text(const char* label, float x, float y, int size = 20, Color tint = White
 float textWidth(const char* label, int size, bool bold = false);
 void centered(const char* label, Rectangle bounds, int size, Color tint = White, bool bold = false);
 void box(Rectangle bounds, Color tint = Panel, float roundness = 0.18f);
+void clip(Rectangle bounds);
 void button(const char* label, Rectangle bounds, bool primary = false);
 bool clicked(Rectangle bounds);
 void meter(Rectangle bounds, float ratio, Color tint);

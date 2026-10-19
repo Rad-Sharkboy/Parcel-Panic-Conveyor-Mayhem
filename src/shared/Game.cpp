@@ -386,11 +386,15 @@ void Game::effects(float dt) {
 }
 bool Game::run() {
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(Config::WindowWidth, Config::WindowHeight, "Parcel Panic: Conveyor Mayhem");
+    InitWindow((int)(Config::WindowWidth * Config::WindowScale),
+               (int)(Config::WindowHeight * Config::WindowScale), "Parcel Panic: Conveyor Mayhem");
     if (!IsWindowReady()) {
         return false;
     }
     Ui::loadFonts();
+    // Scale drawing and mouse input together, so buttons and parcel hover stay aligned.
+    Camera2D camera{{0, 0}, {0, 0}, 0, Config::WindowScale};
+    SetMouseScale(1.0f / Config::WindowScale, 1.0f / Config::WindowScale);
     SetExitKey(KEY_NULL);
     SetTargetFPS(Config::RenderFPS);
     while (!WindowShouldClose() && !quitting) {
@@ -426,7 +430,9 @@ bool Game::run() {
         }
         inspectParcel(dt);
         BeginDrawing();
+        BeginMode2D(camera);
         Renderer::draw(*this);
+        EndMode2D();
         EndDrawing();
     }
     Ui::unloadFonts();

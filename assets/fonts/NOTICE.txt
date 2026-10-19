@@ -1,5 +1,6 @@
-Open Sans Regular and Semibold
-Digitized data copyright (c) 2010-2011, Google Corporation.
-Source: https://www.opensans.com/
-These unmodified font files are distributed under the Apache License 2.0.
+Tomorrow Medium and SemiBold
+Copyright 2019 The Tomorrow Project Authors.
+Original project: https://github.com/MonicaRizzolli/Tomorrow
+Font files: https://github.com/google/fonts/tree/main/ofl/tomorrow
+These unmodified font files are distributed under the SIL Open Font License 1.1.
 See LICENSE.txt in this directory.

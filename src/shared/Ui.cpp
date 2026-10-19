@@ -13,7 +13,7 @@ Font fontFor(int size, bool bold) {
 void Ui::loadFonts() {
     const int sizes[4] = {20, 20, 32, 72};
     for (int i = 0; i < 4; ++i) {
-        const char* name = i == 0 ? "OpenSans-Regular.ttf" : "OpenSans-Semibold.ttf";
+        const char* name = i == 0 ? "Tomorrow-Medium.ttf" : "Tomorrow-SemiBold.ttf";
         // Resolve beside the EXE, so double-click and VS Code use the same font.
         std::string path = std::string(GetApplicationDirectory()) + "assets/fonts/" + name;
         if (!FileExists(path.c_str())) {
@@ -22,7 +22,8 @@ void Ui::loadFonts() {
         if (!FileExists(path.c_str())) {
             continue;
         }
-        fonts[i] = LoadFontEx(path.c_str(), sizes[i], nullptr, 95);
+        // Load at the displayed size so enlarging the window keeps the letters clear.
+        fonts[i] = LoadFontEx(path.c_str(), (int)std::round(sizes[i] * Config::WindowScale), nullptr, 95);
         loaded[i] = fonts[i].texture.id != 0 && fonts[i].texture.id != GetFontDefault().texture.id;
         if (loaded[i]) {
             SetTextureFilter(fonts[i].texture, TEXTURE_FILTER_BILINEAR);
@@ -52,6 +53,11 @@ void Ui::centered(const char* label, Rectangle bounds, int size, Color tint, boo
 }
 void Ui::box(Rectangle bounds, Color tint, float roundness) {
     DrawRectangleRounded(bounds, roundness, 6, tint);
+}
+void Ui::clip(Rectangle bounds) {
+    // Raylib clipping uses window pixels, while drawing uses our original layout coordinates.
+    BeginScissorMode((int)(bounds.x * Config::WindowScale), (int)(bounds.y * Config::WindowScale),
+                     (int)(bounds.width * Config::WindowScale), (int)(bounds.height * Config::WindowScale));
 }
 bool Ui::clicked(Rectangle bounds) {
     return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), bounds);

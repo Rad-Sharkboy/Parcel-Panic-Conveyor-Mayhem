@@ -167,7 +167,7 @@ void Renderer::factory(const Game& g) {
     const LevelDefinition& layout = s.conveyor.layout;
     box({20, 136, 832, 536}, Border, 0.06f);
     box({21, 137, 830, 534}, Floor, 0.06f);
-    BeginScissorMode(22, 138, 828, 532);
+    clip({22, 138, 828, 532});
     for (int x = Config::BoardX; x <= Config::BoardX + Config::Columns * Config::Tile; x += Config::Tile) {
         DrawLine(x, 140, x, 668, Color{30, 42, 53, 255});
     }
@@ -295,7 +295,7 @@ void Renderer::dashboard(const Game& g) {
     const ConveyorSystem& conveyor = s.conveyor;
     box({875, 136, 365, 536}, Panel, 0.06f);
     text(g.showHelp ? "Help" : "Factory info", 895, 155, 24);
-    text(g.showHelp ? "H  Back to factory info" : "H  Help     Q  Change input", 895, 190, 16, Muted);
+    text(g.showHelp ? "H  Back to factory info" : "H  Help     Q  Change input", 895, 190, 17, Muted);
     int cooldown = conveyor.brakeReady - s.tick;
     if (cooldown < 0) {
         cooldown = 0;
@@ -309,41 +309,40 @@ void Renderer::dashboard(const Game& g) {
         parcelInfo(g);
     } else if (!g.showHelp) {
         const CircularQueue& queue = conveyor.inputs[g.inspectedLane];
-        text(TextFormat("Input queue %i  / click to change", g.inspectedLane + 1), 895, 265, 16, White, true);
+        text(TextFormat("Input queue %i", g.inspectedLane + 1), 895, 263, 20, White, true);
         text(TextFormat("%i / %i", queue.size(), queue.getCapacity()), 1172, 265, 18, Cyan);
         float slotWidth = 324.0f / queue.getCapacity();
         for (int i = 0; i < queue.getCapacity(); ++i) {
-            Rectangle slot{895 + i * slotWidth, 297, slotWidth - 5, 31};
+            Rectangle slot{895 + i * slotWidth, 294, slotWidth - 5, 31};
             int id = queue.getSlot(i);
             const Parcel* parcel = s.dispatch.registry.find(id);
             Color tint = parcel ? destinationColor(parcel->destination) : Background;
             box(slot, tint);
-            centered(id ? TextFormat("#%i", id) : "-", slot, 16, parcel ? Background : Muted, true);
+            centered(id ? TextFormat("#%i", id) : "-", slot, 18, parcel ? Background : Muted, true);
             if (i == queue.getFront()) {
                 DrawRectangleRec({slot.x, slot.y + 30, slot.width, 2}, Cyan);
             }
         }
-        text(TextFormat("Front %i   Rear %i   (last insert)", queue.getFront(), queue.getRear()), 895, 338,
-             15, Muted);
+        text(TextFormat("Front %i   Rear %i   (last insert)", queue.getFront(), queue.getRear()), 895, 332,
+             16, Muted);
         const Parcel* last = s.dispatch.registry.find(g.lastEntered[g.inspectedLane]);
-        text(last ? TextFormat("Last to belt: #%i / %s  (already left queue)", last->id,
-                               destinationLetter(last->destination))
-                  : "Waiting parcels appear above. Space pauses.",
-             895, 355, 14, last ? destinationColor(last->destination) : Muted);
+        text(last ? TextFormat("Last to belt: #%i / %s", last->id, destinationLetter(last->destination))
+                  : "Waiting to feed this input",
+             895, 354, 18, last ? destinationColor(last->destination) : Muted);
         HeapEntry root;
         bool hasRoot = s.dispatch.ready.peek(root);
-        text("Dispatch heap", 895, 370, 18, White, true);
-        text(TextFormat("%i ready", s.dispatch.ready.size()), 1142, 370, 17, Cyan);
+        text("Dispatch heap", 895, 386, 18, White, true);
+        text(TextFormat("%i ready", s.dispatch.ready.size()), 1142, 386, 17, Cyan);
         text(hasRoot ? TextFormat("Next #%i / deadline %i", root.id, root.deadline)
-                     : "Empty: no dock parcels waiting to load.",
-             895, 395, 15, Muted);
+                     : "No dock parcels waiting to load",
+             895, 409, 16, Muted);
         text(TextFormat("Hash table   %i records / %i buckets", s.dispatch.registry.size(),
                         s.dispatch.registry.getCapacity()),
-             895, 426, 16, Muted);
+             895, 434, 16, Muted);
         text(conveyor.history.isEmpty()
-                 ? "Undo stack  0 / pause, then click a switch"
+                 ? "Undo stack  0 / pause + switch"
                  : TextFormat("Undo stack   %i changes / Z to undo", conveyor.history.size()),
-             895, 450, 15, Gold);
+             895, 457, 16, Gold);
     } else {
         const char* names[4] = {"Red shipping", "Blue shipping", "Yellow shipping", "Recycling / damaged"};
         for (int i = 0; i < 4; ++i) {
@@ -373,7 +372,7 @@ void Renderer::dashboard(const Game& g) {
                                 : p->kind == ParcelKind::Damaged ? "Recycle"
                                                                  : "Normal")
                    : "Lane clear",
-                 946, 508 + i * 24.0f, 16, p ? destinationColor(p->destination) : White);
+                 946, 508 + i * 24.0f, 17, p ? destinationColor(p->destination) : White);
         }
     }
     DrawLine(895, 582, 1219, 582, Border);
@@ -420,8 +419,8 @@ void Renderer::parcelInfo(const Game& g) {
             parcel->kind == ParcelKind::Express ? Config::ExpressDeadlineTicks : Config::DeadlineTicks;
         meter({card.x + 18, card.y + 139, 271, 4}, (float)remaining / lifetime, tint);
     }
-    text("Hover another parcel to inspect it", card.x + 18, card.y + 153, 14, Muted);
-    text("Move away to close after 3 seconds", card.x + 18, card.y + 176, 13, Muted);
+    text("Hover another parcel to inspect it", card.x + 18, card.y + 153, 16, Muted);
+    text("Move away to close after 3 seconds", card.x + 18, card.y + 176, 15, Muted);
 }
 void Renderer::draw(const Game& g) {
     background(g);

@@ -38,7 +38,7 @@ void titleFactory(float clock) {
     box({510, 98, 685, 518}, Panel, 0.08f);
     text("A small factory. A very busy shift.", 550, 133, 28);
     text("Match the labels. Keep the parcels moving.", 550, 179, 20, Muted);
-    BeginScissorMode(530, 230, 645, 210);
+    clip({530, 230, 645, 210});
     // An illustrative loop; no independent gameplay or advanced effects.
     DrawLineEx({545, 348}, {1165, 348}, 66, Border);
     DrawLineEx({545, 348}, {1165, 348}, 52, Raised);
@@ -137,7 +137,7 @@ void Renderer::results(const Game& g) {
     bool won = g.simulation.outcome == Outcome::Won;
     if (won) {
         // Simple falling rectangles, clipped to the result card.
-        BeginScissorMode(351, 185, 578, 394);
+        clip({351, 185, 578, 394});
         for (int i = 0; i < 24; ++i) {
             float x = 360 + std::fmod(i * 67.0f, 555.0f);
             float y = 185 + std::fmod(g.clock * (26 + i % 4 * 8) + i * 43.0f, 390.0f);

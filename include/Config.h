@@ -5,6 +5,8 @@
 namespace Config {
 const int WindowWidth = 1280;
 const int WindowHeight = 720;
+// Keep the layout coordinates above; draw them 6.25% larger in a 1360 x 765 window.
+const float WindowScale = 1.0625f;
 const int RenderFPS = 60;
 const float MaxFrameDelta = 0.1f;
 const int Columns = 17;
