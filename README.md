@@ -37,11 +37,11 @@ The game is split into three modules, with each part responsible for a different
 
 The simulation works independently of Raylib rendering. Visual changes can be made without rewriting dispatch logic, and conveyor rules can be refined without rebuilding the menu system. Shared parcel definitions keep the modules consistent, while `include/Config.h` keeps gameplay tuning in one place.
 
-## 📥 Download a pre-release
+## 📥 Download and play
 
-To play without building, open [Releases](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/releases) and download **`ParcelPanic-Windows-x64.zip`** from the pre-release's **Assets** section. Extract the whole ZIP, open the `ParcelPanic` folder and run **`ParcelPanic.exe`**. Keep its **`assets`** folder beside the EXE. No compiler or editor is needed to play.
+To play without building, open [Releases](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/releases) and download **`ParcelPanic-Windows-x64.zip`** from the **Assets** section of **Parcel Panic: Conveyor Mayhem V1**. Extract the whole ZIP, open the `ParcelPanic` folder and run **`ParcelPanic.exe`**. Keep its **`assets`** folder beside the EXE. No compiler or editor is needed to play.
 
-These are development builds and will change as the game is refined. To build or edit the code yourself, follow the Windows instructions below.
+To build or edit the code yourself, follow the Windows instructions below.
 
 ## ⚙️ What you need — Windows
 
@@ -94,7 +94,7 @@ Double-click **`ParcelPanic.exe`** inside the generated **`build`** folder, or r
 .\build\ParcelPanic.exe
 ```
 
-Keep the generated **`assets`** folder beside **`ParcelPanic.exe`**, including when sharing the game. The included Open Sans fonts need no separate installation.
+Keep the generated **`assets`** folder beside **`ParcelPanic.exe`**, including when sharing the game. The included Tomorrow fonts need no separate installation.
 
 You can also choose **Terminal → Run Task → Run ParcelPanic**. To debug, press **F5**; the supplied VS Code configuration builds Debug and uses GDB. Once the game has keyboard focus, its F5 key restarts the current level.
 

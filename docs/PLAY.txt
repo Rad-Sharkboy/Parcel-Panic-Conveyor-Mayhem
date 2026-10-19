@@ -1,6 +1,6 @@
-Parcel Panic: Conveyor Mayhem - development build
+Parcel Panic: Conveyor Mayhem V1
 
-Windows 11, 64-bit
+Windows 11, 64-bit | 1360 x 765 window
 Extract the whole ZIP, then open ParcelPanic.exe.
 Keep the assets folder beside the EXE. No compiler is needed to play.
 
@@ -19,7 +19,7 @@ F5: restart
 Match R/B/Y parcels to their docks. X goes to recycling.
 F means fragile; ! means express. Reach both the quota and score target.
 
-This is a work in progress, so expect changes between versions.
+V1 is the first public release. Future versions may refine the game.
 Source and updates: https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem
 
 Made by me and Sabtain.
