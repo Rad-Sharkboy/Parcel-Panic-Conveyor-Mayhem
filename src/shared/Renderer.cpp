@@ -118,7 +118,14 @@ void Renderer::background(const Game& g) {
     DrawRectangle(0, 0, Config::WindowWidth, 3, Cyan);
     DrawRectangle(0, 682, Config::WindowWidth, 38, Panel);
     text("F4  Next level     Shift+F4  Previous     F5  Restart", 28, 691, 17, White);
-    text("F1  Queue     F2  Heap     F3  Hash     H  DSA panel", 838, 691, 16, Muted);
+    const char* labels[3] = {"F1 Queue", "F2 Heap", "F3 Hash"};
+    for (int i = 0; i < 3; i++) {
+        bool hover = CheckCollisionPointRec(GetMousePosition(), DemoTabs[i]);
+        box(DemoTabs[i], hover || g.demos.mode == i + 1 ? Border : Raised);
+        centered(labels[i], DemoTabs[i], 16, White);
+    }
+    box(InfoToggle, CheckCollisionPointRec(GetMousePosition(), InfoToggle) ? Border : Raised);
+    centered("H Help / info", InfoToggle, 16, Cyan);
     if (g.screen != Screen::Playing && g.screen != Screen::Results) {
         return;
     }
@@ -220,6 +227,10 @@ void Renderer::factory(const Game& g) {
             continue;
         }
         parcel(m.position, p.destination, p.kind, m.opacity);
+        if (p.id == g.inspectedParcel && p.status == ParcelStatus::OnConveyor) {
+            DrawRectangleLinesEx({m.position.x - 19, m.position.y - 19, 38, 38}, 2,
+                                 destinationColor(p.destination));
+        }
         if (p.status == ParcelStatus::OnConveyor) {
             int lifetime =
                 p.kind == ParcelKind::Express ? Config::ExpressDeadlineTicks : Config::DeadlineTicks;
@@ -283,8 +294,8 @@ void Renderer::dashboard(const Game& g) {
     const Simulation& s = g.simulation;
     const ConveyorSystem& conveyor = s.conveyor;
     box({875, 136, 365, 536}, Panel, 0.06f);
-    text(g.hud ? "Live structures" : "Routing guide", 895, 155, 24);
-    text(g.hud ? "H  Hide details     Q  Change input" : "H  Show DSA details", 895, 190, 16, Muted);
+    text(g.showHelp ? "Help" : "Factory info", 895, 155, 24);
+    text(g.showHelp ? "H  Back to factory info" : "H  Help     Q  Change input", 895, 190, 16, Muted);
     int cooldown = conveyor.brakeReady - s.tick;
     if (cooldown < 0) {
         cooldown = 0;
@@ -294,25 +305,31 @@ void Renderer::dashboard(const Game& g) {
                   : "Brake ready / right click a belt",
          915, 220, 17, cooldown ? Gold : Cyan);
     DrawLine(895, 252, 1219, 252, Border);
-    if (g.hud) {
+    if (g.inspectedParcel != 0 && !g.demos.mode) {
+        parcelInfo(g);
+    } else if (!g.showHelp) {
         const CircularQueue& queue = conveyor.inputs[g.inspectedLane];
         text(TextFormat("Input queue %i  / click to change", g.inspectedLane + 1), 895, 265, 16, White, true);
         text(TextFormat("%i / %i", queue.size(), queue.getCapacity()), 1172, 265, 18, Cyan);
         float slotWidth = 324.0f / queue.getCapacity();
         for (int i = 0; i < queue.getCapacity(); ++i) {
             Rectangle slot{895 + i * slotWidth, 297, slotWidth - 5, 31};
-            box(slot, queue.getSlot(i) ? Raised : Background);
-            centered(queue.getSlot(i) ? TextFormat("%i", queue.getSlot(i)) : "-", slot, 16,
-                     queue.getSlot(i) ? White : Muted);
+            int id = queue.getSlot(i);
+            const Parcel* parcel = s.dispatch.registry.find(id);
+            Color tint = parcel ? destinationColor(parcel->destination) : Background;
+            box(slot, tint);
+            centered(id ? TextFormat("#%i", id) : "-", slot, 16, parcel ? Background : Muted, true);
             if (i == queue.getFront()) {
                 DrawRectangleRec({slot.x, slot.y + 30, slot.width, 2}, Cyan);
             }
         }
         text(TextFormat("Front %i   Rear %i   (last insert)", queue.getFront(), queue.getRear()), 895, 338,
              15, Muted);
-        if (queue.isEmpty()) {
-            text("Empty: no parcels waiting at this input.", 895, 355, 14, Muted);
-        }
+        const Parcel* last = s.dispatch.registry.find(g.lastEntered[g.inspectedLane]);
+        text(last ? TextFormat("Last to belt: #%i / %s  (already left queue)", last->id,
+                               destinationLetter(last->destination))
+                  : "Waiting parcels appear above. Space pauses.",
+             895, 355, 14, last ? destinationColor(last->destination) : Muted);
         HeapEntry root;
         bool hasRoot = s.dispatch.ready.peek(root);
         text("Dispatch heap", 895, 370, 18, White, true);
@@ -360,10 +377,51 @@ void Renderer::dashboard(const Game& g) {
         }
     }
     DrawLine(895, 582, 1219, 582, Border);
-    text(g.paused ? "Click switches, then Z to undo." : "Space pauses the belts for planning.", 895, 595, 16,
-         g.paused ? Gold : White);
+    text(g.paused ? "Click switches, then Z to undo." : "Hover a parcel for info. Space pauses.", 895, 595,
+         16, g.paused ? Gold : White);
     text("F1 / F2 / F3  Step through the DSA demos", 895, 622, 15, Muted);
     text("F4  Next shift     Shift+F4  Previous", 895, 646, 15, Cyan);
+}
+void Renderer::parcelInfo(const Game& g) {
+    const Parcel* parcel = g.simulation.dispatch.registry.find(g.inspectedParcel);
+    if (!parcel) {
+        return;
+    }
+    // A fixed sidebar card keeps the conveyor and its docks visible.
+    const Rectangle& card = Ui::ParcelInfo;
+    Color tint = destinationColor(parcel->destination);
+    box({card.x + 3, card.y + 5, card.width, card.height}, Fade(BLACK, 0.35f), 0.08f);
+    box(card, Panel, 0.08f);
+    DrawRectangleRec({card.x, card.y + 12, 4, card.height - 24}, tint);
+    text("PARCEL INFO", card.x + 18, card.y + 12, 13, Muted, true);
+    text(TextFormat("Parcel #%i", parcel->id), card.x + 18, card.y + 33, 28);
+    box({card.x + 247, card.y + 18, 42, 42}, tint);
+    centered(destinationLetter(parcel->destination), {card.x + 247, card.y + 18, 42, 42}, 26, Background,
+             true);
+    const char* destinations[4] = {"Red dock", "Blue dock", "Yellow dock", "Recycling"};
+    const char* kinds[4] = {"Normal", "Express", "Fragile", "Damaged"};
+    const char* statuses[9] = {
+        "Created",   "Waiting at input", "On conveyor", "At dock", "Waiting for loader",
+        "Delivered", "Wrong dock",       "Crushed",     "Expired"};
+    text(TextFormat("%s  /  %s", destinations[(int)parcel->destination], kinds[(int)parcel->kind]),
+         card.x + 18, card.y + 71, 18, tint);
+    DrawLine((int)card.x + 18, (int)card.y + 101, (int)card.x + 289, (int)card.y + 101, Border);
+    text(statuses[(int)parcel->status], card.x + 18, card.y + 111, 17);
+    if (terminal(parcel->status)) {
+        text(TextFormat("%+i points", parcel->pointsAwarded), card.x + 196, card.y + 111, 17, Gold);
+    } else {
+        int remaining = parcel->deadline - g.simulation.tick;
+        if (remaining < 0) {
+            remaining = 0;
+        }
+        text(TextFormat("%.1f s left", remaining * Config::TickSeconds), card.x + 196, card.y + 111, 17,
+             remaining < 25 ? Gold : Cyan);
+        int lifetime =
+            parcel->kind == ParcelKind::Express ? Config::ExpressDeadlineTicks : Config::DeadlineTicks;
+        meter({card.x + 18, card.y + 139, 271, 4}, (float)remaining / lifetime, tint);
+    }
+    text("Hover another parcel to inspect it", card.x + 18, card.y + 153, 14, Muted);
+    text("Move away to close after 3 seconds", card.x + 18, card.y + 176, 13, Muted);
 }
 void Renderer::draw(const Game& g) {
     background(g);

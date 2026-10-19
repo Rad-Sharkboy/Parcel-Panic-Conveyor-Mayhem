@@ -10,6 +10,11 @@ void Game::start(int level) {
     simulation.load(level);
     selectedLevel = simulation.level;
     inspectedLane = 0;
+    inspectedParcel = 0;
+    parcelInfoTime = 0;
+    for (int i = 0; i < Config::MaxInputs; i++) {
+        lastEntered[i] = 0;
+    }
     screen = Screen::Playing;
     paused = false;
     demos.mode = 0;
@@ -50,7 +55,7 @@ void Game::input() {
         return;
     }
     for (int i = 1; i <= 3; ++i) {
-        if (IsKeyPressed(KEY_F1 + i - 1)) {
+        if (IsKeyPressed(KEY_F1 + i - 1) || Ui::clicked(Ui::DemoTabs[i - 1])) {
             if (demos.mode == i) {
                 demos.mode = 0;
             } else {
@@ -69,8 +74,13 @@ void Game::input() {
         }
         return;
     }
-    if (IsKeyPressed(KEY_H)) {
-        hud = !hud;
+    if (IsKeyPressed(KEY_H) || Ui::clicked(Ui::InfoToggle)) {
+        if (screen == Screen::Menu || screen == Screen::Help) {
+            screen = screen == Screen::Menu ? Screen::Help : Screen::Menu;
+        } else {
+            showHelp = !showHelp;
+        }
+        return;
     }
     if (screen == Screen::Menu) {
         if (IsKeyPressed(KEY_ENTER) || Ui::clicked(Ui::Play)) {
@@ -112,7 +122,7 @@ void Game::input() {
         }
         return;
     }
-    if (hud && (IsKeyPressed(KEY_Q) || Ui::clicked(Ui::QueueLane))) {
+    if (!showHelp && (IsKeyPressed(KEY_Q) || (inspectedParcel == 0 && Ui::clicked(Ui::QueueLane)))) {
         inspectedLane = (inspectedLane + 1) % simulation.conveyor.layout.inputCount;
     }
     if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
@@ -132,6 +142,11 @@ void Game::input() {
             return;
         }
     }
+    // The info card is a UI surface; clicking it must not switch a belt behind it.
+    if (inspectedParcel != 0 && CheckCollisionPointRec(GetMousePosition(), Ui::ParcelInfo)) {
+        hoverCell = -1;
+        return;
+    }
     Vector2 mouse = GetMousePosition();
     int x = (int)((mouse.x - Config::BoardX) / Config::Tile);
     int y = (int)((mouse.y - Config::BoardY) / Config::Tile);
@@ -144,6 +159,35 @@ void Game::input() {
     }
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
         simulation.conveyor.brake(hoverCell, simulation.tick);
+    }
+}
+void Game::inspectParcel(float dt) {
+    if (screen != Screen::Playing || demos.mode) {
+        inspectedParcel = 0;
+        parcelInfoTime = 0;
+        return;
+    }
+    Vector2 mouse = GetMousePosition();
+    if (inspectedParcel != 0 && CheckCollisionPointRec(mouse, Ui::ParcelInfo)) {
+        parcelInfoTime = 3; // Keep the card readable while the pointer is over it.
+        return;
+    }
+    parcelInfoTime -= dt;
+    if (parcelInfoTime <= 0) {
+        inspectedParcel = 0;
+    }
+    for (int id = 1; id <= simulation.generated; id++) {
+        const ParcelMotion& visual = motion[id];
+        if (visual.status != ParcelStatus::OnConveyor || visual.opacity < 0.25f) {
+            continue;
+        }
+        // Use the drawn position, not the next logical cell, while a parcel is moving.
+        Rectangle bounds{visual.position.x - 18, visual.position.y - 24, 36, 44};
+        if (CheckCollisionPointRec(mouse, bounds)) {
+            inspectedParcel = id;
+            parcelInfoTime = 3;
+            break;
+        }
     }
 }
 void Game::turnJunctions(float dt) {
@@ -220,6 +264,13 @@ void Game::syncParcels() {
         }
         const Parcel& parcel = bucket.parcel;
         ParcelMotion& m = motion[parcel.id];
+        if (parcel.status == ParcelStatus::OnConveyor && m.status != ParcelStatus::OnConveyor) {
+            for (int lane = 0; lane < simulation.conveyor.layout.inputCount; lane++) {
+                if (parcel.cell == simulation.conveyor.layout.inputs[lane]) {
+                    lastEntered[lane] = parcel.id;
+                }
+            }
+        }
         int target = parcel.status == ParcelStatus::OnConveyor ? parcel.cell : parcel.eventCell;
         if (target >= 0 && target != m.targetCell) {
             Vector2 position = Renderer::center(target);
@@ -373,6 +424,7 @@ bool Game::run() {
         if (remaining > 0) {
             effects(remaining);
         }
+        inspectParcel(dt);
         BeginDrawing();
         Renderer::draw(*this);
         EndDrawing();

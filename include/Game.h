@@ -29,16 +29,20 @@ class Game {
     void syncParcels();
     void deliveryEffect(const Parcel& parcel);
     void turnJunctions(float dt);
+    void inspectParcel(float dt);
 
 public:
     Simulation simulation;
     Demos demos;
     Screen screen = Screen::Menu;
-    bool paused = false, hud = true;
+    bool paused = false, showHelp = false;
     float accumulator = 0, clock = 0, beltClock = 0, titleTimer = 0, comboTimer = 0;
     int comboShown = 1;
     int selectedLevel = 0;
     int inspectedLane = 0;
+    int lastEntered[Config::MaxInputs]{}; // Last real dequeue into each input belt, for the info panel.
+    int inspectedParcel = 0;
+    float parcelInfoTime = 0;
     int hoverCell = -1;
     float junctionPulse[Config::Cells]{};
     float junctionAngle[Config::Cells]{};

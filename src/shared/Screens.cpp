@@ -104,7 +104,7 @@ void Renderer::menu(const Game& g) {
                                 "R / F5",     "F1",          "F2",          "F3",         "F4 / Shift+F4"};
         const char* actions[10] = {"Switch a cyan junction",      "Brake a belt cell temporarily",
                                    "Pause, plan and resume",      "Undo the last junction change",
-                                   "Toggle the live DSA panel",   "Restart this level",
+                                   "Help / factory info",         "Restart this level",
                                    "Circular queue demo",         "Deadline min-heap demo",
                                    "Hash table and probing demo", "Next / previous level"};
         for (int i = 0; i < 10; ++i) {
@@ -169,9 +169,9 @@ void Renderer::demonstration(const Game& g) {
                        : "Open-address hash table",
          90, 96, 34);
     button("Next operation / Enter", DemoNext, true);
-    button("Reset / Backspace", DemoReset);
+    button("Restart sample", DemoReset);
     button("Close / Esc", DemoClose);
-    text("Practice data / game paused", 990, 155, 16, Muted);
+    text("Sample data / game paused", 990, 155, 16, Muted);
     DrawLine(90, 190, 1188, 190, Border);
     if (d.mode == 1) {
         const CircularQueue& queue = d.queue;
