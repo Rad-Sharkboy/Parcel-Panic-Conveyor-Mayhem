@@ -2,130 +2,73 @@
 
 **Route parcels. Beat deadlines. Keep the factory moving.**
 
-Parcel Panic: Conveyor Mayhem is a **C++17 and Raylib arcade game** built as a university Data Structures and Algorithms project. It runs on **Windows 11** and is developed using **VS Code and MinGW-w64**.
+A C++ and Raylib game made as a university DSA project for **Windows 11**. Switch conveyor junctions, match parcels to docks, protect fragile boxes and avoid jams.
 
-Switch conveyor junctions to send parcels to matching delivery docks. Build combos, avoid jams, protect fragile freight, and survive increasingly busy shifts.
+## 🎮 Download and play
 
-## 🎮 Features
+1. Open [Releases](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/releases).
+2. Download **ParcelPanic-Windows-x64.zip** from the newest development release.
+3. Extract the ZIP, open the **ParcelPanic** folder and double-click **ParcelPanic.exe**.
 
-- Four playable levels with different conveyor layouts.
-- Red, blue and yellow destinations, express deadlines, fragile parcels and damaged parcels for recycling.
-- Emergency brakes, rush waves, combos, scoring and victory/failure screens.
-- Pause to plan routes and undo junction changes.
-- Moving conveyor tracks, labeled cardboard parcels, readable menus and a live DSA panel.
-- F1–F3 demonstrations using the actual custom data structures.
-- Instant F4 level skipping for the instructor's demo.
-
-## 📚 DSA concepts
-
-| Structure | Implementation | Gameplay role |
-|---|---|---|
-| Circular queue | Dynamic array, front/rear indices, wraparound | Incoming parcel buffers |
-| Min-heap | Dynamic array, deadline/sequence ordering | Earliest-deadline dispatch at the shared loader |
-| Hash table | Linear probing, tombstones and rehashing | Parcel tracking by unique ID |
-| Linked stack | Singly linked nodes | Undo paused junction changes |
-
-These structures are implemented from scratch with ordinary arrays, linked nodes, destructors and deep copies. No STL containers replace them. Queue operations and stack push/pop are O(1); heap operations are O(log n), with O(n) growth; hash lookup is expected O(1), worst O(n). Full details are in [COMPLEXITY.md](docs/COMPLEXITY.md). The [code guide](docs/CODE_GUIDE.md) explains the class examples, every include and the less familiar C++ syntax.
-
-## 🧩 Modular design
-
-The game is split into three modules, with each part responsible for a different side of the factory:
-
-- **Conveyor and routing:** handles belt movement, junction switching, input queues, emergency brakes and stack-based undo.
-- **Parcel tracking and dispatch:** manages the hash-table registry, parcel status, deadlines, heap-based loading and scoring.
-- **Game and presentation:** brings the modules together through the game loop, four level layouts, menus, controls, animations and DSA demonstrations.
-
-The simulation works independently of Raylib rendering. Visual changes can be made without rewriting dispatch logic, and conveyor rules can be refined without rebuilding the menu system. Shared parcel definitions keep the modules consistent, while `include/Config.h` keeps gameplay tuning in one place.
-
-## ⚙️ What you need — Windows
-
-1. **VS Code** with Microsoft's **C/C++** and **CMake Tools** extensions. VS Code will recommend them when you open the folder.
-2. **MinGW-w64**: `gcc`, `g++` and `mingw32-make` available on PATH. For F5 debugging, also install `gdb`.
-3. **CMake 3.22 or newer**, added to PATH during installation.
-4. Internet access for the first build. CMake downloads Raylib automatically; no manual Raylib or vcpkg setup is needed.
-
-If the same MinGW compiler already builds your PC-Builder-Tycoon project, you can use it here too. **Visual Studio is not required.**
-
-### If you do not have MinGW yet
-
-Install [MSYS2](https://www.msys2.org/), open its **UCRT64** terminal, and run:
-
-```text
-pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-make mingw-w64-ucrt-x86_64-gdb
-```
-
-Add the installation's `ucrt64\bin` folder to your Windows user PATH (normally `C:\msys64\ucrt64\bin`). Install [CMake](https://cmake.org/download/) and choose its **add to PATH** option. Close and reopen VS Code afterward.
-
-In a new VS Code terminal, these commands should show installed versions:
-
-```powershell
-g++ --version
-mingw32-make --version
-cmake --version
-```
-
-## 🚀 Download, build and play
-
-### 1. Download
-
-Click **Code → Download ZIP** on GitHub and extract the ZIP. Open the extracted project folder in **VS Code**.
-
-### 2. Build
-
-Press **Ctrl+Shift+B**, or run this in the VS Code terminal:
-
-```powershell
-.\build.bat
-```
-
-The script downloads Raylib on the first build, compiles the game and copies the included fonts into `build/assets`. Wait for **“Build complete.”**
-
-### 3. Play
-
-Double-click **`ParcelPanic.exe`** inside the generated **`build`** folder, or run:
-
-```powershell
-.\build\ParcelPanic.exe
-```
-
-Keep the generated **`assets`** folder beside **`ParcelPanic.exe`**, including when sharing the game. The included Open Sans fonts need no separate installation.
-
-You can also choose **Terminal → Run Task → Run ParcelPanic**. To debug, press **F5**; the supplied VS Code configuration builds Debug and uses GDB. Once the game has keyboard focus, its F5 key restarts the current level.
-
-After changing a `.cpp` or `.h` file, save it and press **Ctrl+Shift+B** again. Build the whole project; the single-file “Run Code” command will not link the other source files or Raylib.
+Keep the **assets** folder beside the EXE. You do not need VS Code or a compiler to play. Development releases are work in progress; the game may change.
 
 ## 🕹️ Controls
 
 | Input | Action |
 |---|---|
 | Left click | Switch a cyan junction |
-| Right click | Temporarily brake a conveyor cell; shared cooldown |
-| Hover a parcel | Inspect its destination, type, status and remaining time |
-| Space / Esc | Pause/resume planning |
+| Right click | Brake a belt cell temporarily |
+| Hover a parcel | Show its destination, type, status and time left |
+| Space / Esc | Pause or resume |
 | Z while paused | Undo a junction change |
-| H | Switch between Help and Factory info |
-| Q / click the input queue heading | Inspect the next live input queue |
+| H | Help / Factory info |
+| Q / click the queue heading | View another input queue |
 | R / F5 | Restart the level |
-| F1 / F2 / F3 | Open queue / heap / hash demonstrations |
-| Enter / Backspace / Esc in a demo | Next operation / reset / close |
-| F4 / Shift+F4 | Next / previous level immediately |
+| F1 / F2 / F3 | Queue / heap / hash demo; footer buttons work too |
+| Enter / Backspace / Esc in a demo | Next operation / restart sample / close |
+| F4 / Shift+F4 | Next / previous level, wrapping at either end |
 
-F4 wraps from level 4 to level 1. Shift+F4 wraps backward. Skipping resets the run and awards no victory. You can also choose any level from the title screen.
+F1–F3 open with **three sample entries**. Click **Next operation** to continue.
 
-The F1–F3 practice demos open with **three sample entries already inserted**. You can also click their buttons along the bottom. Click **Next operation** or press **Enter** to continue; **Restart sample / Backspace** restores the starting example.
+The live queue shows parcels waiting to enter a belt. Its colored boxes contain parcel IDs. **Last to belt** remembers the latest departure. The undo stack fills when you pause and switch a junction.
 
-Factory info shows real waiting parcels in destination-colored queue slots. **Last to belt** keeps the latest departure visible after it leaves the queue. Hover a moving parcel to open a fixed info card in the sidebar; it remains briefly after the pointer moves away. Pause and click a junction to put a change on the undo stack.
+## 🏭 Four shifts
 
-## 🏭 Four levels
+| Level | Challenge | Deliveries needed | Score target |
+|---|---|---:|---:|
+| Sort School | Learn the two-color routes | 12 / 20 | 1,200 |
+| Rush Junction | Three inputs and rush waves | 23 / 38 | 2,300 |
+| Fragile Freight | Crusher bypass and recycling | 29 / 48 | 2,800 |
+| Mayhem Mode | All parcel types and a slower loader | 36 / 60 | 3,600 |
 
-| Level | Main challenge | Arrivals | Required deliveries | Score target |
-|---|---|---:|---:|---:|
-| Sort School | Two colors, two input lanes, introductory routing | 20 | 12 | 1,200 |
-| Rush Junction | Three colors, merging lanes and rush waves | 38 | 23 | 2,300 |
-| Fragile Freight | Crusher bypass, express/fragile parcels and recycling | 48 | 29 | 2,800 |
-| Mayhem Mode | Vertical sorter, all parcel types and a slower loader | 60 | 36 | 3,600 |
+Match **R**, **B** and **Y** to their docks. Send **X** to recycling. **F** means fragile; **!** means express. Meet both the delivery and score targets. Wrong docks, broken parcels and missed deadlines break your combo.
 
-Match parcel letters to docks: **R**, **B**, **Y**, and **X** for damaged/recycling. **F** means fragile; **!** means express. Reach both the quota and score target. Wrong docks, missed deadlines and broken fragile parcels break your combo. A full jam meter ends the shift.
+## 📚 DSA and modular design
+
+All four structures are written manually, using arrays or linked nodes. No prebuilt stack, queue, heap or map replaces them.
+
+| Module | What it handles |
+|---|---|
+| Conveyor and routing | Circular input queues, belt movement and linked-stack undo |
+| Tracking and dispatch | Hash-table parcel records and heap-based deadline ordering |
+| Game and graphics | Four levels, input, menus, animation and practice demos |
+
+The game rules and drawing code are separate, so changing a menu does not require rewriting the data structures.
+
+## 🛠️ Build or edit in VS Code
+
+Use **VS Code, MinGW-w64 and CMake 3.22+**. See [Windows setup](docs/WINDOWS_SETUP.md) if you need to install them. Visual Studio is not required.
+
+Open the project folder in VS Code, then press **Ctrl+Shift+B** or run:
+
+```powershell
+.\build.bat
+.\build\ParcelPanic.exe
+```
+
+The first build downloads Raylib and needs internet access. Rebuild after editing code. Use the whole-project build, not the single-file “Run Code” button. F5 in VS Code starts debugging; F5 inside the game restarts the level.
+
+For class: [code guide and includes](docs/CODE_GUIDE.md), [how the game works](docs/ARCHITECTURE.md), [main functions](docs/INTERFACES.md), [complexity](docs/COMPLEXITY.md), [short report](docs/REPORT.md), and [team plan](docs/TEAM_PLAN.md).
 
 ---
 

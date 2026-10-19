@@ -1,0 +1,25 @@
+Parcel Panic: Conveyor Mayhem - development build
+
+Windows 11, 64-bit
+Extract the whole ZIP, then open ParcelPanic.exe.
+Keep the assets folder beside the EXE. No compiler is needed to play.
+
+Left click: switch a cyan junction
+Right click: brake a belt temporarily
+Hover a parcel: show its information
+Space / Esc: pause or resume
+Z while paused: undo a switch
+H: Help / Factory info
+Q: view another input queue
+F1 / F2 / F3: queue / heap / hash samples (footer buttons also work)
+Enter in a sample: next operation; Backspace: restart; Esc: close
+F4 / Shift+F4: next / previous level
+F5: restart
+
+Match R/B/Y parcels to their docks. X goes to recycling.
+F means fragile; ! means express. Reach both the quota and score target.
+
+This is a work in progress, so expect changes between versions.
+Source and updates: https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem
+
+Made by me and Sabtain.

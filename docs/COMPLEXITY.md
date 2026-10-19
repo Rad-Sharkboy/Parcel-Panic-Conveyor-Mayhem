@@ -1,25 +1,22 @@
-# Complexity and storage
+# How much work each operation takes
 
-Let n be stored entries, c allocated hash buckets, and g grid cells (187 by default).
+**n** means the number of items. **c** means the allocated array capacity.
 
-| Operation | Typical / amortized | Worst case | Storage |
-|---|---:|---:|---:|
-| Circular queue enqueue/dequeue/peek | O(1) | O(1), including rejection | O(capacity) |
-| Queue clear | O(capacity) | O(capacity) | no extra allocation |
-| Heap peek | O(1) | O(1) | O(n) retained array |
-| Heap insert | O(log n) amortized | O(n) when resizing | O(n) |
-| Heap extract-min | O(log n) | O(log n) | O(1) extra |
-| Hash find/update/erase | expected O(1) at bounded load | O(c) | O(c) |
-| Hash insertion | expected amortized O(1) | O(n²) pathological rehash collisions | O(c) plus old array during rehash |
-| Hash rehash | expected O(n) | O(n²) under pathological collisions | O(c) |
-| Linked stack push/pop | O(1) | O(1), excluding allocator cost | O(depth) |
-| Stack clear | O(depth) | O(depth) | O(1) extra |
-| Conveyor movement | expected O(g) registry probes | O(g × c) with pathological hash collisions | O(g) snapshots |
-| Deadline scan | O(c) | O(c) plus failed-ID hash probes | O(1) extra |
-| Dispatch tick | O(c + log n) normally | O(c + n log n) to discard all stale heap entries, plus hash probes | O(1) extra |
+- **O(1):** roughly the same work, even with more items.
+- **O(log n):** follows a path through the heap's tree levels.
+- **O(n) / O(c):** may visit every item / allocated slot.
 
-The queue is a bounded dynamic allocation, not a resizing container: full admission fails, so its operation bound remains constant. The heap doubles its dynamic array and orders equal deadlines by a monotonically increasing sequence number. The table grows before occupied-plus-tombstone load reaches 70%; modulo hashing makes collisions easy to explain but does not promise constant worst-case behavior. Tombstones preserve probe chains. Duplicate keys update without changing size.
+| Operation | Usual work | Important exception |
+|---|---|---|
+| Queue enqueue, dequeue, peek | O(1) | A full/empty check is also O(1). |
+| Stack push, pop | O(1) | Clearing visits all n nodes: O(n). |
+| Heap peek | O(1) | Reads the root. |
+| Heap insert / remove root | O(log n) | An insertion that grows the array takes O(n). |
+| Hash find, update, erase | Expected O(1) | Many collisions can require O(c) probing. |
+| Hash insert | Expected O(1) over many insertions | Resizing usually takes O(c); extreme collisions can make it O(c + n²). |
 
-`clear` retains queue/heap/table allocations for reuse (the table clears all bucket states); `HashTable::reset` explicitly replaces its allocation for a repeatable capacity-seven demo. All owning classes destroy their arrays or linked nodes and make independent deep copies. A queue or hash-table copy takes O(capacity); a stack copy takes O(depth). A heap copy allocates O(capacity) storage and initializes that array, so its full cost is O(capacity), even though only n live entries need copying. Assignment also releases the old storage (including O(old depth) for a linked stack). There are no ready-made containers substituting for the required structures.
+The heap swaps entries up or down. The hash table tries the next bucket after a collision. At about 70% used/deleted slots, it grows and inserts the live records again.
 
-The simulation stores at most 60 parcel records in the shipped levels. Registry scans are intentionally simple and transparent at that scale. An express delivery scans active queued/on-belt records to extend deadlines; already staged heap priorities remain unchanged. A more scalable implementation could maintain separate deadline events, but that would add teaching complexity outside this prototype's scope.
+Copying or clearing arrays takes work proportional to the allocated slots, except heap clear, which only resets its count. Stack copying/clearing visits its nodes. Storage is O(c) for arrays and O(n) for stack nodes.
+
+Gameplay also loops through the grid and parcel records. Hash lookups happen inside some of those loops, so a complete game step is not O(1). The current levels contain at most 60 parcels.

@@ -1,81 +1,40 @@
-# Parcel Panic: Conveyor Mayhem — Preliminary Academic Report
+# Parcel Panic — short project report
 
-**Project type:** undergraduate BSCS data structures semester prototype
-**Language and framework:** C++17, Raylib 5.5, CMake
-**Development environment:** Windows 11, VS Code and MinGW-w64
-**Repository:** Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem
-**Status:** implemented prototype with verified builds; local Windows/human evaluation remains outstanding.
+**Course:** Data Structures and Algorithms
 
-## 1. Abstract
+**Tools:** C++17, Raylib, CMake, VS Code and MinGW-w64
 
-Parcel Panic: Conveyor Mayhem is a two-dimensional factory arcade puzzle game in which the player switches conveyor junctions to guide parcels toward matching docks. Parcels arrive continuously, travel through merging routes and compete for a shared loading station. Express deadlines, fragile handling, recycling, rush waves and a congestion meter create time pressure. Four custom data structures support this behavior: circular queues buffer arrivals, a hash table stores authoritative parcel information, a binary min-heap schedules ready shipments, and a linked stack implements planning undo. The project separates deterministic simulation from Raylib presentation so algorithms and gameplay invariants can be validated without opening a graphical window.
+**Target:** Windows 11
 
-The educational objective is to explain why a data structure fits a real operation, identify its ownership and complexity, and demonstrate edge cases visibly. The practical objective is a playable prototype with responsive controls and clear progression rather than a static algorithm visualization. Actual compilation, runtime rendering and automated input checks were performed in the cloud; no Windows execution or human playtest is implied by those results.
+## Aim
 
-## 2. Problem and requirements
+Build a playable sorting game that uses the structures taught in class. The player changes conveyor junctions to guide parcels to matching docks before their deadlines.
 
-A conveyor sorter combines ordering, lookup, priority and reversal problems. Input machines must preserve parcel order while downstream cells are occupied. Conveyor cells need efficient access to a parcel's destination, deadline, type and lifecycle without owning copies that can diverge. A shared loader must select the earliest deadline among parcels that have already reached a correct dock. Finally, the player should be able to reverse planning edits without attempting to rewind physical movement.
+## Main features
 
-The shipped game therefore imposes explicit rules. A cell contains at most one active parcel. A parcel belongs to exactly one active location: an input queue, a conveyor cell or dispatch staging. Only matching docks admit parcels into the heap. A deadline miss is terminal and penalized once. Fragile parcels are destroyed on a crusher, while damaged parcels require recycling. Victory requires both the delivery quota and score target. All parcels eventually terminate, or the level stops on congestion or the safety time bound. F4 skips directly between levels for instructor demonstrations and does not create a legitimate victory.
+Four levels add rush waves, fragile parcels, recycling and a slower loader. Players can brake belts, pause to plan, undo junction changes and inspect parcels by hovering. F4 skips levels for demonstrations.
 
-## 3. Data structure design and justification
+## Where the DSA is used
 
-### Circular queue
+| Structure | Job |
+|---|---|
+| Circular queue | Hold arrivals until their input belt is free. |
+| Linked stack | Undo paused junction changes in reverse order. |
+| Min-heap | Load waiting dock parcels by earliest deadline. |
+| Hash table | Find and update parcel records by ID. |
 
-Each input uses a manually allocated integer array with front, rear, count and capacity fields. Front starts at zero and rear at minus one. Enqueue advances rear modulo capacity before writing, so rear identifies the last inserted position, following the field manual. Dequeue advances front and returns the removed ID, or minus one if empty. Full/empty operations leave the queue unchanged. This bounded design is appropriate because an input machine has a finite buffer; a full queue delays generation rather than silently dropping a parcel. IDs, not parcel copies, are stored. Both operations take O(1) time, including overflow rejection. Clearing takes O(capacity).
+The implementations use ordinary arrays, linked nodes and loops. Deep copies follow Lab 01. F1–F3 use the same classes with separate sample data; each opens with three entries.
 
-### Binary min-heap
+The structures are not equally important in every level. Input queues often empty quickly. In automated winning runs, peak heap sizes were 1, 1, 3 and 22 across the four levels. Deadline priority changed the order in the later levels. An array could also store this game's small sequential ID range; hashing is partly an educational choice. F3 deliberately creates collisions that those runs did not encounter.
 
-Correctly routed parcels enter a dynamically growing array heap. Each entry contains parcel ID, absolute deadline and arrival sequence. Comparison orders first by deadline and then by sequence, making equal-deadline behavior deterministic and teachable. Insertion sifts upward; extraction replaces the root with the last entry and sifts downward. Peek is O(1); extraction is O(log n). Insertion is amortized O(log n), with an O(n) worst-case allocation/copy step when the backing array doubles. The loader's cadence is separate from conveyor movement, so reaching a dock does not guarantee immediate shipment.
+## Code organization
 
-### Open-addressed hash table
+Conveyor/routing, tracking/dispatch, and game/graphics are separate modules. The game rules work without Raylib. Graphics read those rules and draw smooth movement between steps.
 
-The hash table owns parcel records. Positive integer IDs map to buckets using modulo arithmetic; collisions advance by linear probing. Buckets distinguish empty, occupied and tombstone states. A tombstone preserves a probe chain after deletion, while duplicate keys update the existing record without increasing size. The table grows based on occupied-plus-tombstone load to avoid long probes under normal use.
+## Current checks and limits
 
-Lookup, update and deletion have expected O(1) cost but O(n) worst-case probing. Rehashing is expected O(n) and can be O(n²) under pathological collisions; insertion is therefore not advertised as constant worst-case. Rehashing invalidates record pointers, so other structures store IDs and retrieve only temporary pointers. This ownership rule avoids dangling pointers when the table grows.
+Cloud checks covered the custom structures, complete winning runs, movement, pause/undo, demos and mouse/keyboard controls. A Windows EXE was also cross-compiled. Development downloads are built by the Windows workflow; its actual run status is shown in GitHub Actions. Native Windows gameplay and human difficulty feedback still need local review.
 
-### Linked command stack
+There is no sound, save system or high-score storage yet. Development releases are unfinished versions.
 
-Each stack node stores a junction index and its previous outgoing choice. A paused edit pushes a command; Z pops the most recent command and restores that choice. Push/pop are O(1), excluding allocator cost, and clearing is O(depth). The stack is cleared at the next simulation tick. It therefore reverses planning decisions while respecting the boundary between configuration and completed movement. It is not a physical rewind system.
-
-All four classes destroy their arrays or nodes and implement deep-copy constructors and assignment operators, following Lab 01's Rule of Three. Each copy owns separate storage. Queue indices and stack nodes follow the supplied class examples; heap swaps use an explicit temporary variable, and hash probing uses ordinary loops. No STL container substitutes for these implementations. [CODE_GUIDE.md](CODE_GUIDE.md) identifies the remaining concepts that need explanation.
-
-## 4. Architecture and module responsibilities
-
-There are three logical modules despite the planned two-person team. Conveyor and Routing contains the queue, stack and occupancy engine. Parcel Tracking and Dispatch contains the registry, heap, deadlines, scoring and loader. Shared Game and Presentation coordinates level generation and fixed-step simulation, handles input and menus, and draws the factory and demos.
-
-The intended student split assigns Module 1 to Member 1 and Module 2 to Member 2; Module 3 and integration are joint responsibilities. This describes a future learning/review arrangement. The initial implementation was generated with Codex, and no student contribution or authorship is fabricated. Both students must understand all modules before a viva.
-
-The core compiles independently of Raylib. A logical tick first advances time, attempts generation, checks deadlines and the loader, then moves conveyors on the level cadence. Movement snapshots occupancy and claims target cells before committing transfers. Rotating iteration priority gives merging branches a deterministic opportunity to progress. Cells occupied at the beginning of a pass cannot receive another parcel during that pass. This conservative spacing prevents moving a parcel twice, swapping through occupied cells or resolving a collision differently because of render timing.
-
-## 5. Gameplay and educational presentation
-
-Sort School introduces two colors, two merging inputs and two controllable junctions. Rush Junction adds a third stream, three destinations and rush timing. Fragile Freight adds an explicit safe bypass around a crusher and four dock destinations, including recycling. Mayhem Mode changes the main sorting flow to a vertical spine with three incoming lanes, an input bypass and tighter dispatch capacity.
-
-The player can switch junctions with the left mouse button, brake a cell with the right mouse button and pause with Space. Cardboard parcels carry color-coded destination labels, with additional markers for fragile, express and damaged types. Continuous conveyor rails, moving arrows, lifetime bars, particles, floating rewards, combo text and warnings communicate system state. Graphics use Raylib primitives and bundled Open Sans fonts; no separate art or sound assets are needed. Configurable constants centralize gameplay, DSA and animation tuning.
-
-The presentation uses fixed arrays, ordinary loops and linear interpolation. It advances animation at simulation tick boundaries, keeps belt offsets during brakes, and turns junction arrows from their visible angle even when the player clicks rapidly or undoes a switch. Pause and demos hold the factory animation. Outcomes retain their actual cell and points so several events in one tick can each produce feedback. These changes affect presentation without changing the four data-structure implementations or level rules.
-
-F1–F3 open isolated repeatable instances of the actual custom structures. They open after three real insertions so data is immediately visible. Enter or the Next operation button continues the sequence; Backspace or Restart sample restores the three-entry example. Clickable footer buttons provide another way to open the demos. The queue demo exposes physical array slots and front/rear wraparound. The heap demo displays the real array and tree, including stable deadline ties and extraction restructuring. The hash demo deliberately collides IDs 1, 8 and 15, performs successful/missing searches, creates/reuses a tombstone and triggers rehashing. The live simulation pauses during these demonstrations. The live dashboard separately reads the real game structures; Q or clicking its queue heading selects another input. Destination-colored queue slots show current waiting IDs; a separate Last to belt label preserves the most recent departure. A fixed hover card in the sidebar reads the selected parcel record, and H switches Help / Factory info. The undo stack records paused junction edits.
-
-## 6. Build and runtime verification
-
-The graphical game compiled and rendered with Raylib 5.5 in the cloud. A separate MinGW-w64 cross-build produced a 64-bit Windows game executable with only Windows system DLL imports. The build also copies the bundled fonts beside the executable. This confirms Windows-target compilation and linking; the executable still needs native Windows 11 play verification.
-
-The Windows workflow builds the same project through `build.bat`. Native Windows execution, VS Code/GDB integration, display scaling and human difficulty evaluation remain part of local review. Hosted CI results should be read from the actual workflow run.
-
-### How much each DSA matters in the current balance
-
-The queue supplies FIFO admission and the stack reverses paused edits directly. The heap prioritizes competing dock arrivals by deadline. The hash table is the shared parcel registry, although an indexed array would also work for this prototype's small, sequential ID range; hashing is an educational choice, not a claim of necessity at this scale.
-
-In one deterministic automatically routed winning run per level, each input queue peaked at one waiting parcel. Peak heap sizes were 1, 1, 3 and 22 across levels 1–4. The later levels included cases where the earliest deadline differed from the earliest arrival, so priority scheduling affected the dispatch order. These runs had no hash collisions because the sequential IDs fit within the growing table's range. F3 deliberately uses colliding IDs to demonstrate probing and deletion. These observations are specific to those routes, not a proof about every possible playthrough. The first levels therefore demonstrate queue/heap behavior less visibly than the later ones. Display improvements do not artificially hold parcels or alter level timing.
-
-## 7. Limitations and future evaluation
-
-This is a first prototype. Its deterministic generator helps repeat demonstrations but does not yet support alternate seeds. Conservative movement leaves visible spacing and simplifies safety. Express dispatch extends queued/on-belt lifetimes without modifying priorities already in the ready heap. No sound, persistent high scores or save games are implemented. The preliminary balance is supported by automated route solving, not a broad user study.
-
-The next evaluation should ask students unfamiliar with the layout to play each level, measure learning time, record confusion between type and destination, and assess whether rushes and brakes are useful under realistic reactions. Further improvements could add accessibility palettes, scalable text, optional procedural sound and local result persistence. A final academic submission should include the students' own explanations, genuine contribution records and the results of local Windows and human playtesting.
-
-## 8. Supporting material
-
-Implementation contracts: [INTERFACES](INTERFACES.md). Data flow: [ARCHITECTURE](ARCHITECTURE.md). Complexity: [COMPLEXITY](COMPLEXITY.md). Intended team plan: [TEAM_PLAN](TEAM_PLAN.md). Official dependency references: [Raylib 5.5](https://github.com/raysan5/raylib/releases/tag/5.5), [CMake](https://cmake.org/documentation/), and [MSYS2/MinGW](https://www.msys2.org/).
+The initial prototype was generated with Codex and revised with user feedback. The team plan describes intended work; it is not a claim of completed student contributions.
