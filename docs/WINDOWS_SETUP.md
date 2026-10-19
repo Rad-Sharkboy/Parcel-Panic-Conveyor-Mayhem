@@ -1,26 +1,19 @@
-# Windows setup for editing the code
+# Windows build and release notes
 
-To only play, download the ZIP from [Releases](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/releases). These tools are for building or editing.
+The full software requirements, MinGW installation steps, PATH setup and VS Code build/play instructions are in the [README](../README.md). Use those as the main setup guide.
 
-1. Install **VS Code** and its **C/C++** and **CMake Tools** extensions.
-2. Install **CMake 3.22+** from [cmake.org](https://cmake.org/download/). Choose the option to add it to PATH.
-3. Install **MinGW-w64**. If your Rig Builder compiler already works, you can use it here.
+## If the build does not start
 
-If you need MinGW, install [MSYS2](https://www.msys2.org/), open its **UCRT64** terminal and run:
+- Check `g++ --version`, `mingw32-make --version` and `cmake --version` in a new VS Code terminal. PATH tells Windows where to find these commands; restart VS Code after changing it.
+- Build the whole project with Ctrl+Shift+B or `.\build.bat`. Single-file Run Code cannot link the other source files and Raylib.
+- The first build needs internet access to download Raylib.
+- If CMake reports a compiler/generator mismatch after you change compilers, delete only the generated `build` folder and build again.
+- Keep `assets` beside the EXE so the bundled fonts load. The VS Code F5 setup also requires GDB.
 
-```text
-pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-make mingw-w64-ucrt-x86_64-gdb
-```
+## Development downloads
 
-Add `C:\msys64\ucrt64\bin` to your Windows user PATH (adjust it if MSYS2 is elsewhere). PATH tells Windows where to find commands. Restart VS Code afterward.
+[Releases](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/releases) contains playable Windows ZIPs. Download `ParcelPanic-Windows-x64.zip` from Assets, extract it completely and run the EXE inside. GitHub's automatic **Source code** ZIP contains code, not the built game. No compiler is needed to play the packaged build.
 
-Open the project folder in VS Code. In its terminal, `g++ --version`, `mingw32-make --version` and `cmake --version` should work. Then run:
+The release package contains the EXE, fonts/licenses and [play instructions](PLAY.txt). The current pre-release is [v0.1.0-dev.1](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/releases/tag/v0.1.0-dev.1).
 
-```powershell
-.\build.bat
-.\build\ParcelPanic.exe
-```
-
-The first build downloads Raylib. Keep `build/assets` beside the EXE. Press Ctrl+Shift+B to rebuild after edits. F5 starts the supplied GDB debugging setup; Visual Studio is not required.
-
-If you change compilers and CMake complains, delete only the generated `build` folder and build again.
+For the next development release, push a new tag such as `v0.1.0-dev.2`. The [Windows workflow](../.github/workflows/ci.yml) builds the game and publishes the ZIP as a pre-release. Use a new tag for each version and wait for the workflow to succeed before sharing it. A successful build still needs a local Windows play check.
