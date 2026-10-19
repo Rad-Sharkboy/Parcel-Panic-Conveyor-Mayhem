@@ -12,13 +12,11 @@ void Demos::open(int which) {
     queue.clear();
     heap.clear();
     table.reset(7);
-    if (mode == 1) {
-        event = "Empty queue. Click Next operation to enqueue #101.";
-    } else if (mode == 2) {
-        event = "Empty heap. Click Next operation to insert #201.";
-    } else {
-        event = "Empty table. Click Next operation to insert #1.";
+    // Perform real insertions now, so opening a demo immediately shows useful data.
+    for (int i = 0; i < 3; i++) {
+        advance();
     }
+    event = "3 sample entries inserted. Next operation continues; Restart sample begins again.";
 }
 
 void Demos::advance() {
