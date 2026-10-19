@@ -61,7 +61,7 @@ All four structures use manual arrays or linked nodes, destructors and independe
 | Parcel Tracking and Dispatch | Hash records, heap order, statuses, deadlines, scoring and the loader |
 | Shared Game and Presentation | Four levels, simulation timing, Raylib input, menus, graphics and demos |
 
-The planned two-member split assigns the first two modules separately and the shared work jointly. This is a study/review plan, not a record of completed student contributions. The starting implementation was generated with Codex. See [TEAM_PLAN.md](TEAM_PLAN.md).
+The planned two-member split assigns the first two modules separately and the shared work jointly. This is a study/review plan, not a record of completed student contributions. The starting implementation was generated with Codex. The study and viva plan is included below.
 
 Each tick advances time, attempts an arrival, checks deadlines and the loader, then moves and feeds conveyors when movement is due. Dock arrivals wait for a later loader check. Movement uses an occupancy snapshot and a claimed-target array: an occupied cell cannot receive another parcel during the same pass. Rotating the scan's starting point avoids always favoring one merge branch. These rules prevent two parcels claiming one cell or moving twice because of loop order.
 
@@ -74,9 +74,9 @@ Each tick advances time, attempts an arrival, checks deadlines and the loader, t
 | Fragile Freight | Crusher bypass, express/fragile parcels and recycling | 48 | 29 | 2,800 |
 | Mayhem Mode | Vertical sorter, three inputs, an input bypass and a slower loader | 60 | 36 | 3,600 |
 
-Left click changes a junction; right click brakes a cell; Space pauses. Destination colors and letters identify docks, while extra markers identify parcel types. Moving belts, lifetime bars, particles, rewards, combo text and warnings show what is happening. Raylib shapes and bundled Open Sans fonts supply the graphics; no external art or audio download is required. `Config.h` keeps tuning values together.
+Left click changes a junction; right click brakes a cell; Space pauses. Destination colors and letters identify docks, while extra markers identify parcel types. Moving belts, lifetime bars, particles, rewards, combo text and warnings show what is happening. Raylib shapes and bundled Tomorrow fonts supply the graphics; no external art or audio download is required. `Config.h` keeps tuning values together.
 
-Graphics target 60 FPS while logical ticks take 0.22 seconds. Fixed arrays and ordinary loops track animation. Parcel positions move smoothly between cell centers, belt offsets survive braking, and junction arrows turn from their visible angle. Tick-boundary timing prevents sudden jumps. Outcome locations and rewards are saved per parcel so simultaneous events each show the correct feedback. Pause and demos freeze the live world.
+The window is 1360 × 765, with the original layout scaled up by 6.25% and larger queue labels. Graphics target 60 FPS while logical ticks take 0.22 seconds. Fixed arrays and ordinary loops track animation. Parcel positions move smoothly between cell centers, belt offsets survive braking, and junction arrows turn from their visible angle. Tick-boundary timing prevents sudden jumps. Outcome locations and rewards are saved per parcel so simultaneous events each show the correct feedback. Pause and demos freeze the live world.
 
 ### Demos and the live sidebar
 
@@ -95,9 +95,11 @@ Queue slots use parcel destination colors. Hovering a moving parcel opens a fixe
 
 ## 6. Verification and observed DSA use
 
-The graphical game compiled and rendered in the cloud, with automated checks of game logic, animation and input. A MinGW cross-build also produced a Windows x64 executable. The [native Windows release build](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/actions/runs/39208548487) then succeeded using `build.bat` on GitHub Actions.
+The V1 graphical build compiled and rendered in the cloud with the Tomorrow fonts and 1360 × 765 window. Private checks covered the four levels, animation, demo contents, label widths and scaled mouse input. A MinGW cross-build also produced a Windows x64 executable. These checks are kept outside the repository.
 
-The published [v0.1.0-dev.1 pre-release](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/releases/tag/v0.1.0-dev.1) ZIP was downloaded and checked for integrity. It includes the EXE, bundled fonts/licenses and play instructions; the executable imports Windows system DLLs rather than requiring MinGW compiler DLLs. These checks confirm compilation and packaging. Native Windows 11 gameplay, VS Code/GDB debugging, display scaling and human difficulty evaluation still need local review.
+The [Windows workflow](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/actions/workflows/ci.yml) builds the project through `build.bat` on GitHub Actions and packages the [V1 release](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/releases/tag/v1.0.0). The ZIP contains the EXE, Tomorrow fonts/license and play instructions. A `v1.0.0` tag publishes a public release; tags ending in `-dev.*` publish pre-releases.
+
+Native Windows 11 gameplay, VS Code/GDB debugging, Windows display scaling and human difficulty evaluation still need local review. Compilation and cloud checks do not replace those checks.
 
 ### Does each structure matter in play?
 
@@ -113,7 +115,39 @@ Arrivals are deterministic: there are no alternate random seeds. Conservative mo
 
 Next, play all four levels on Windows and record confusing labels, learning time, difficulty, and whether brakes/rushes are useful. Possible later improvements include alternative color palettes, scalable text, optional sound and saved results. The final submission should record actual student contributions and local playtest results.
 
-## References
+## 8. Study and viva plan
 
-- [Architecture](ARCHITECTURE.md), [class interfaces](INTERFACES.md), [complexity](COMPLEXITY.md), [code guide](CODE_GUIDE.md), [team plan](TEAM_PLAN.md)
+This is a planned division of work, not a claim of completed contributions. The starting prototype was generated with Codex. Both members should understand the whole program before the viva.
+
+| Planned owner | Area | Work to understand and review |
+|---|---|---|
+| Member 1 | Conveyor and Routing | Circular queue, linked stack, grid movement, merge decisions, brakes and planning undo |
+| Member 2 | Parcel Tracking and Dispatch | Hash registry, heap ordering, tombstones/rehash, parcel statuses, deadlines, scoring and loader |
+| Both | Shared Game and Presentation | Raylib, menus, tick timing, four layouts, animation, demos, module connections, documentation and balance |
+
+Each member reviews the other's module. Names and contribution records can be filled in when that work has actually been done.
+
+### Suggested order
+
+1. Trace parcel #1 through the registry, queue, conveyor, dock, heap and final dispatch. Identify its status and responsible module at each step.
+2. Show queue full/empty behavior and wraparound, stack undo, equal heap deadlines and searching past a hash tombstone. Then swap topics and explain the other member's structures.
+3. Build both Release and Debug on Windows. Trace movement/loading and check full buffers, wrong docks and expired deadlines. Explain the results from the code.
+4. Play all four levels. Find a route for each destination/type, try brakes at merges and record confusing or unbalanced parts.
+5. Review changes together. Use specific commit messages, and update interface and complexity notes when behavior changes.
+
+### Five-minute viva outline
+
+| Time | Demonstration |
+|---|---|
+| 0:00–0:45 | Launch Sort School, explain parcel letters, switch a junction and show an input queue |
+| 0:45–1:30 | Pause, switch twice, press Z twice; explain why past movement is not undone |
+| 1:30–2:30 | F1/Enter for full/wrapped queues, F2/Enter for equal deadlines, F3/Enter for collisions and a tombstone |
+| 2:30–3:45 | F4 through the remaining layouts; show the fragile bypass, recycling and rush warnings. Shift+F4 goes back. |
+| 3:45–5:00 | Explain module boundaries, who owns memory, worst-case complexity, verified Windows builds and remaining local playtesting |
+
+Keep contribution records factual; do not invent names, percentages or completed work.
+
+## 9. References
+
+- [Architecture](ARCHITECTURE.md), [complexity](COMPLEXITY.md), [code guide](CODE_GUIDE.md)
 - [Raylib 5.5](https://github.com/raysan5/raylib/releases/tag/5.5), [CMake](https://cmake.org/documentation/), [MSYS2/MinGW](https://www.msys2.org/)

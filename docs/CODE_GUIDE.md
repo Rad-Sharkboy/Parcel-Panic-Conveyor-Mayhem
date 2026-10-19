@@ -124,7 +124,9 @@ The game advances logically every 0.22 seconds while drawing targets 60 frames p
 
 Parcel positions interpolate between cell centers: `elapsed / duration` gives travel progress. Junction arrows turn toward their chosen direction, belts keep their scroll offsets, and each outcome creates feedback once. These visual changes do not replace DSA operations.
 
-Fonts load after the Raylib window opens and unload before it closes. Paths start beside the EXE so VS Code and double-click launches find the same files. If a font file is missing, the default Raylib font is available.
+Tomorrow Medium supplies ordinary labels; SemiBold supplies emphasized and larger text. Both are bundled under the SIL Open Font License 1.1. Fonts load after the Raylib window opens and unload before it closes. Paths start beside the EXE so VS Code and double-click launches find the same files. If a font file is missing, the default Raylib font is available.
+
+The 1360 × 765 window uses a Raylib `Camera2D` with a zoom of 1.0625. Layout positions remain based on 1280 × 720. `SetMouseScale` applies the inverse scale to mouse input, and `Ui::clip()` scales clipping rectangles to actual window pixels. These are Raylib graphics functions; the DSA operations and level timings stay the same.
 
 ### Limits and build tools
 
