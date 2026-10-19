@@ -23,9 +23,11 @@ IDs survive registry rehashing; raw parcel pointers do not. Callers keep IDs bet
 - `Parcel`: value record with ID, destination, kind, status, deadline and current/previous cell. `eventCell` and `pointsAwarded` preserve the outcome location and reward for animation.
 - `LevelDefinition`: tuning and a handcrafted grid. `makeLevel(index)` constructs one of four layouts; level indices wrap in both directions.
 - `Simulation`: owns conveyor and dispatch modules. `load(index)` resets a run; `step()` advances one logical tick; `next(delta)` changes level without awarding victory.
-- `Demos`: separate queue/heap/table objects. `open(mode)` clears practice data; `advance()` calls one of three short operation sequences. It belongs to the core and does not require Raylib.
+- `Demos`: separate queue/heap/table objects. `open(mode)` clears practice data and performs three actual insertions; `advance()` continues one of three short operation sequences. It belongs to the core and does not require Raylib.
 - `Game`: handles input, frame timing and screen state. `run()` creates the Raylib window, runs until quit, unloads fonts and closes the window. There are no command-line switches or diagnostic file exports. `syncParcels()` reads the registry; `effects(dt)` moves visual positions and effects. `inspectedLane` selects the live input queue displayed in the sidebar.
 - `Renderer`: reads the game state and draws it; screen functions live in `Screens.cpp`. It does not change simulation records.
 - `Ui`: drawing helpers and button rectangles shared with input. `loadFonts()` runs after window creation; `unloadFonts()` runs before closing it.
 
-Pause and practice demos stop the live simulation and world animation. A paused junction can still turn in response to a click or undo. Next operation/Enter, Reset/Backspace and Close/Esc operate the demos. F4 and Shift+F4 start another level immediately, including from a demo.
+`Game::inspectParcel(dt)` uses visual positions for hover hit testing and keeps an ID plus a short display timer. `Renderer::parcelInfo` reads that record into a fixed sidebar card. `lastEntered[]` remembers real input-to-belt transfers; it is separate from current queue contents. `showHelp` selects Help instead of Factory info.
+
+Pause and practice demos stop the live simulation and world animation. A paused junction can still turn in response to a click or undo. Next operation/Enter, Restart sample/Backspace and Close/Esc operate the demos. The footer buttons also open F1–F3. F4 and Shift+F4 start another level immediately, including from a demo.

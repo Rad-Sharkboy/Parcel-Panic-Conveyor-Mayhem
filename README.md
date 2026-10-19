@@ -100,9 +100,10 @@ After changing a `.cpp` or `.h` file, save it and press **Ctrl+Shift+B** again. 
 |---|---|
 | Left click | Switch a cyan junction |
 | Right click | Temporarily brake a conveyor cell; shared cooldown |
+| Hover a parcel | Inspect its destination, type, status and remaining time |
 | Space / Esc | Pause/resume planning |
 | Z while paused | Undo a junction change |
-| H | Show/hide the live DSA panel |
+| H | Switch between Help and Factory info |
 | Q / click the input queue heading | Inspect the next live input queue |
 | R / F5 | Restart the level |
 | F1 / F2 / F3 | Open queue / heap / hash demonstrations |
@@ -111,7 +112,9 @@ After changing a `.cpp` or `.h` file, save it and press **Ctrl+Shift+B** again. 
 
 F4 wraps from level 4 to level 1. Shift+F4 wraps backward. Skipping resets the run and awards no victory. You can also choose any level from the title screen.
 
-The F1–F3 practice demos start empty. Click **Next operation** or press **Enter** to insert, remove and inspect items; **Reset** starts the sequence again. The live panel shows waiting parcels: an empty input queue means nothing is waiting at that input, and an empty heap means nothing is waiting at the loader. Pause and click a junction to put a change on the undo stack.
+The F1–F3 practice demos open with **three sample entries already inserted**. You can also click their buttons along the bottom. Click **Next operation** or press **Enter** to continue; **Restart sample / Backspace** restores the starting example.
+
+Factory info shows real waiting parcels in destination-colored queue slots. **Last to belt** keeps the latest departure visible after it leaves the queue. Hover a moving parcel to open a fixed info card in the sidebar; it remains briefly after the pointer moves away. Pause and click a junction to put a change on the undo stack.
 
 ## 🏭 Four levels
 

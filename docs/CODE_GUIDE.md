@@ -114,13 +114,17 @@ CMake, `build.bat`, VS Code launch settings and the Windows CI workflow are buil
 
 ## Why an inspector can be empty
 
-**F1–F3 are practice demonstrations.** They use separate real instances of our classes and intentionally start empty. Click **Next operation** or press **Enter**. Reset/Backspace starts over; Close/Esc returns. The live game stays frozen while a demo is open.
+**F1–F3 are practice demonstrations.** They use separate real instances of our classes. Opening one runs the first three insertions immediately, so there is data to inspect without another key press. The footer buttons also open them. Click **Next operation** or press **Enter** to continue. Restart sample/Backspace restores the three-entry example; Close/Esc returns. The live game stays frozen while a demo is open.
 
 - **F1:** the first six steps enqueue #101–#106. Step 7 rejects a full queue; steps 8–9 dequeue; steps 10–11 wrap rear around to slots 0 and 1. Later steps empty the queue and demonstrate underflow.
 - **F2:** the first six steps insert deadlines 90, 30, 60, 30, 10, 50. #205 becomes the root because its deadline is 10. Later steps extract entries and show stable ordering of equal deadlines.
 - **F3:** IDs 1, 8 and 15 collide in seven buckets. Continue to search, delete #8, search across its tombstone, reuse that bucket and trigger a rehash. The caption reports each actual operation.
 
 **The sidebar is live gameplay data.** Its input queue contains only parcels waiting to enter that input, so it often empties quickly. Parcels already on the belt have been dequeued. Q or clicking the queue heading changes the inspected input. Braking an input cell while the game is running can make arrivals wait in its queue.
+
+Queue slots use the destination color of the actual parcel record. `lastEntered[]` remembers the last ID transferred onto each input belt; it is shown separately as **Last to belt**, never counted as still waiting. H switches between **Help** and **Factory info**.
+
+`Game::inspectParcel` checks the mouse against each visible parcel's drawn rectangle. It stores only the selected ID and a three-second display timer. The fixed sidebar card looks up that ID in the hash table to show current destination/type/status/deadline. It cannot cover a conveyor or dock. This uses ordinary loops, arrays and Raylib rectangle hit testing; it adds no library includes or game rules.
 
 The heap contains correctly routed dock arrivals waiting for the shared loader. If it loads them quickly, there may be no backlog to display. The hash count includes all generated records, even after delivery/failure. The undo stack fills only when you pause and click a cyan junction; Z pops one edit, and the next simulation tick clears the history. In the supplied screenshot, eight hash records with empty waiting buffers was a valid state.
 
