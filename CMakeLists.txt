@@ -60,10 +60,14 @@ if(PARCEL_BUILD_GAME)
     parcel_warnings(parcel_panic)
     if(WIN32)
         enable_language(RC)
-        target_sources(parcel_panic PRIVATE resources/parcel-panic.rc)
-        set_source_files_properties(resources/parcel-panic.rc PROPERTIES
-            INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-            OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/parcel-panic.ico")
+        set(parcel_icon_file "${CMAKE_CURRENT_SOURCE_DIR}/assets/parcel-panic.ico")
+        set(parcel_icon_resource "${CMAKE_CURRENT_BINARY_DIR}/parcel-panic.rc")
+        configure_file(resources/parcel-panic.rc.in "${parcel_icon_resource}" @ONLY)
+        # Keep C++ include paths away from MinGW's resource preprocessor.
+        add_library(parcel_windows_icon OBJECT "${parcel_icon_resource}")
+        set_source_files_properties("${parcel_icon_resource}" PROPERTIES
+            OBJECT_DEPENDS "${parcel_icon_file}")
+        target_sources(parcel_panic PRIVATE $<TARGET_OBJECTS:parcel_windows_icon>)
         set_target_properties(parcel_panic PROPERTIES OUTPUT_NAME ParcelPanic)
     endif()
     # Copy the bundled fonts beside the EXE for both double-click and VS Code launches.

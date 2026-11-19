@@ -1,7 +1,11 @@
 @echo off
 setlocal
 pushd "%~dp0"
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    echo ERROR: Could not open the project folder.
+    if not defined CI pause
+    exit /b 1
+)
 
 where cmake >nul 2>&1
 if errorlevel 1 goto missing_cmake
@@ -38,5 +42,6 @@ goto failed
 echo.
 echo Build stopped. Read the error above; the game has not been rebuilt successfully.
 echo If you changed compiler or generator, delete only the generated build folder and try again.
+if not defined CI pause
 popd
 exit /b 1
