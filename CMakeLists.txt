@@ -59,6 +59,11 @@ if(PARCEL_BUILD_GAME)
     target_link_libraries(parcel_panic PRIVATE parcel_core raylib)
     parcel_warnings(parcel_panic)
     if(WIN32)
+        enable_language(RC)
+        target_sources(parcel_panic PRIVATE resources/parcel-panic.rc)
+        set_source_files_properties(resources/parcel-panic.rc PROPERTIES
+            INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+            OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/parcel-panic.ico")
         set_target_properties(parcel_panic PROPERTIES OUTPUT_NAME ParcelPanic)
     endif()
     # Copy the bundled fonts beside the EXE for both double-click and VS Code launches.
