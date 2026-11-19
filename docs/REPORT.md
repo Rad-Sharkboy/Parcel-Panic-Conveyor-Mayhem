@@ -1,4 +1,4 @@
-# Academic project report
+# Academic project report — V2
 
 | Project | Details |
 |---|---|
@@ -6,7 +6,7 @@
 | Course | Undergraduate BSCS Data Structures and Algorithms |
 | Language and tools | C++17, Raylib 5.5, CMake, VS Code and MinGW-w64 |
 | Target | Windows 11, 64-bit |
-| Status | Playable development build; local Windows playtesting is still needed |
+| Status | V2 release build; local Windows playtesting is still needed |
 
 ## 1. Aim
 
@@ -61,7 +61,7 @@ All four structures use manual arrays or linked nodes, destructors and independe
 | Parcel Tracking and Dispatch | Hash records, heap order, statuses, deadlines, scoring and the loader |
 | Shared Game and Presentation | Four levels, simulation timing, Raylib input, menus, graphics and demos |
 
-The planned two-member split assigns the first two modules separately and the shared work jointly. This is a study/review plan, not a record of completed student contributions. The starting implementation was generated with Codex. The study and viva plan is included below.
+The project uses two feature modules plus shared presentation work. [Sabtain](https://github.com/Sabtainn) contributed Module 2, Parcel Tracking and Dispatch, and shared responsibility for Module 3, Game Integration and Presentation. The starting implementation was generated with Codex. The study and viva plan is included below.
 
 Each tick advances time, attempts an arrival, checks deadlines and the loader, then moves and feeds conveyors when movement is due. Dock arrivals wait for a later loader check. Movement uses an occupancy snapshot and a claimed-target array: an occupied cell cannot receive another parcel during the same pass. Rotating the scan's starting point avoids always favoring one merge branch. These rules prevent two parcels claiming one cell or moving twice because of loop order.
 
@@ -93,39 +93,44 @@ F1–F3 use separate instances of the actual custom structures and open with thr
 
 Queue slots use parcel destination colors. Hovering a moving parcel opens a fixed sidebar card with its ID, type, destination, status and remaining time. H switches Help/Factory info. Empty live buffers can be normal: parcels may move onto the belt or through the loader quickly. The demos remain populated independently of live gameplay.
 
-## 6. Verification and observed DSA use
+## 6. Completion review and verification
 
-The V1 graphical build compiled and rendered in the cloud with the Tomorrow fonts and 1360 × 765 window. Private checks covered the four levels, animation, demo contents, label widths and scaled mouse input. A MinGW cross-build also produced a Windows x64 executable. These checks are kept outside the repository.
+Initial audit found working DSA implementations and reachable routes, but an almost invisible shared loader, technical information in ordinary gameplay, immediate special-type introductions, no live stepping inspector and no checked-in test target. The supplied proposal and master prompt guided this pass; lecture source files were unavailable.
 
-The [Windows workflow](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/actions/workflows/ci.yml) builds the project through `build.bat` on GitHub Actions and packages the [V1 release](https://github.com/Rad-Sharkboy/Parcel-Panic-Conveyor-Mayhem/releases/tag/v1.0.0). The ZIP contains the EXE, Tomorrow fonts/license and play instructions. A `v1.0.0` tag publishes a public release; tags ending in `-dev.*` publish pre-releases.
+The Windows GCC 15.2.0 / CMake 4.3.4 Release build succeeds through `build.bat`. The generated `build` folder can be deleted and recreated; Raylib downloads automatically on the first build. Raylib's unused MOD decoder is disabled; its custom-config conditional definitions are made consistent. No compiler warning suppression was added to game code.
 
-Native Windows 11 gameplay, VS Code/GDB debugging, Windows display scaling and human difficulty evaluation still need local review. Compilation and cloud checks do not replace those checks.
+During V2 development, a local verification harness checked capacity/wraparound/deep copies, heap ties/growth, hash collisions/tombstones/rehash, stack LIFO/inspection, deadlines, wrong docks, fragile hazards, duplicate completion prevention, brakes, backpressure, jams, restart, level switching, graph reachability and one-cell occupancy. Test-only routing verified that every required dock has a safe route from every input and that the shipped graphs contain no cycles. All four scripted runs won. The harness is intentionally excluded from the public V2 source folder.
 
-### Does each structure matter in play?
+| Level | Delivered / failed | Peak ready heap | Dispatches choosing a later arrival by deadline |
+|---|---|---:|---:|
+| Sort School | 20 / 0 | 1 | 0 |
+| Rush Junction | 38 / 0 | 10 | 16 |
+| Fragile Freight | 48 / 0 | 12 | 10 |
+| Mayhem Mode | 58 / 2 | 17 | 18 |
 
-The queue gives FIFO admission and the stack directly supports undo. The heap matters when ready parcels compete for the loader. The hash table centralizes record lookup, although a simple indexed array could also serve this small sequential ID range; hashing is an educational choice here.
+These are deterministic routing-policy results, not human playtest scores. Input queues peak at one in those runs; separate blockage/brake tests verify real buffering and backpressure. Parcels are not held artificially to fill a display. Sequential live IDs can avoid collisions; F3 remains the explicitly labeled collision/tombstone sample.
 
-In one automatically routed winning run per level, every input queue peaked at one waiting parcel. Peak ready-heap sizes were **1, 1, 3 and 22** across levels 1–4. Later levels included shipments whose deadline order differed from arrival order, so heap priority affected dispatch. Those runs had no hash collisions because the sequential IDs fit the growing table; F3 deliberately chooses colliding IDs to show probing.
+The native Windows title/start button and first briefing were inspected interactively. Additional gameplay, inspector, pause, help and selection layouts were rendered from real simulation states and visually checked. This does not certify every keyboard shortcut or Windows display-scale setting. Windows CI is configured to build and package the V2 release after its version tag is pushed.
 
-These measurements describe those routes, not every possible playthrough. Early levels show less queue/heap backlog. The display improvements do not hold parcels artificially or change level timing.
+## 7. Preserved behavior and limits
 
-## 7. Limits and next review
+All four custom algorithms, manual storage, public operations and Rule of Three implementations remain. Only `CommandStack::commandAt(depth) const` adds read-only traversal for inspection; push/pop are unchanged. The existing four layouts, names, three-module split, Tomorrow fonts, 1360 x 765 window and F1-F5 shortcuts remain.
 
-Arrivals are deterministic: there are no alternate random seeds. Conservative movement leaves visible spacing. An express delivery extends queued/on-belt deadlines without changing priorities already in the ready heap. There is no sound, saved game or persistent high-score system. Automated winning routes support the initial balance but do not replace human playtesting.
+Loader timings are now 6/9/9/7 ticks. Level 3 gates fragile, express and damaged generation using `Config.h` thresholds. Score/quota commitments remain. The new shared-bay panel, input staging, hover route previews, failure messages and skippable briefings explain these rules. I opens real structures; Enter advances an actual tick; S/J/Z demonstrate real planning changes in the stack tab. Closing inspection remains paused.
 
-Next, play all four levels on Windows and record confusing labels, learning time, difficulty, and whether brakes/rushes are useful. Possible later improvements include alternative color palettes, scalable text, optional sound and saved results. The final submission should record actual student contributions and local playtest results.
+Remaining review: human difficulty and complete keyboard/mouse playtesting across all levels, display-scaling checks and VS Code/GDB debugging. Automated winning routes cannot establish enjoyment or learning time. There is no audio, save system or persistent high score. Arbitrary board-size changes are not validated. No new claim of compatibility with unseen lecture code is made.
 
-## 8. Study and viva plan
+## 8. Contribution and viva plan
 
-This is a planned division of work, not a claim of completed contributions. The starting prototype was generated with Codex. Both members should understand the whole program before the viva.
+Both contributors should understand the whole program before the viva.
 
-| Planned owner | Area | Work to understand and review |
+| Contributor | Area | Work to understand and review |
 |---|---|---|
-| Member 1 | Conveyor and Routing | Circular queue, linked stack, grid movement, merge decisions, brakes and planning undo |
-| Member 2 | Parcel Tracking and Dispatch | Hash registry, heap ordering, tombstones/rehash, parcel statuses, deadlines, scoring and loader |
-| Both | Shared Game and Presentation | Raylib, menus, tick timing, four layouts, animation, demos, module connections, documentation and balance |
+| Project team | Conveyor and Routing | Circular queue, linked stack, grid movement, merge decisions, brakes and planning undo |
+| [Sabtain](https://github.com/Sabtainn) | Parcel Tracking and Dispatch | Hash registry, heap ordering, tombstones/rehash, parcel statuses, deadlines, scoring and loader |
+| Both contributors | Shared Game and Presentation | Raylib, menus, tick timing, four layouts, animation, demos, module connections, documentation and balance |
 
-Each member reviews the other's module. Names and contribution records can be filled in when that work has actually been done.
+Both contributors should review the other module before the viva.
 
 ### Suggested order
 
@@ -141,7 +146,7 @@ Each member reviews the other's module. Names and contribution records can be fi
 |---|---|
 | 0:00–0:45 | Launch Sort School, explain parcel letters, switch a junction and show an input queue |
 | 0:45–1:30 | Pause, switch twice, press Z twice; explain why past movement is not undone |
-| 1:30–2:30 | F1/Enter for full/wrapped queues, F2/Enter for equal deadlines, F3/Enter for collisions and a tombstone |
+| 1:30–2:30 | I/Tab/Enter to inspect live queue/heap/hash/stack and step a tick; F3 for the labeled collision/tombstone sample |
 | 2:30–3:45 | F4 through the remaining layouts; show the fragile bypass, recycling and rush warnings. Shift+F4 goes back. |
 | 3:45–5:00 | Explain module boundaries, who owns memory, worst-case complexity, verified Windows builds and remaining local playtesting |
 

@@ -18,19 +18,22 @@ const Rectangle Select{82, 410, 320, 50};
 const Rectangle Help{82, 474, 320, 50};
 const Rectangle Quit{82, 538, 320, 50};
 const Rectangle Back{70, 600, 220, 48};
-const Rectangle Resume{895, 477, 151, 42};
-const Rectangle Restart{1058, 477, 161, 42};
-const Rectangle MainMenu{895, 529, 324, 38};
+const Rectangle Resume{895, 491, 151, 36};
+const Rectangle Restart{1058, 491, 161, 36};
+const Rectangle MainMenu{895, 535, 324, 32};
 const Rectangle Retry{390, 440, 230, 52};
 const Rectangle Next{650, 440, 230, 52};
 const Rectangle ResultsMenu{520, 510, 230, 42};
 const Rectangle DemoNext{90, 145, 230, 37};
 const Rectangle DemoReset{333, 145, 210, 37};
 const Rectangle DemoClose{556, 145, 160, 37};
-const Rectangle QueueLane{895, 262, 324, 29};
+const Rectangle QueueLane{895, 362, 324, 31};
 const Rectangle DemoTabs[3] = {{838, 686, 86, 28}, {930, 686, 86, 28}, {1022, 686, 86, 28}};
 const Rectangle InfoToggle{1114, 686, 126, 28};
-const Rectangle ParcelInfo{895, 266, 324, 201};
+const Rectangle InspectorToggle{656, 686, 170, 28};
+const Rectangle BriefingStart{265, 464, 350, 42};
+const Rectangle PauseToggle{895, 623, 324, 31};
+const Rectangle ParcelInfo{895, 220, 324, 218};
 void loadFonts();
 void unloadFonts();
 bool fontsReady();
@@ -47,6 +50,8 @@ Color destinationColor(Destination destination);
 const char* destinationLetter(Destination destination);
 void parcel(Vector2 position, Destination destination, ParcelKind kind, float opacity = 1.0f,
             float scale = 1.0f);
+Rectangle waitingSlot(int index);
+Rectangle loadingSlot(int index);
 Rectangle levelCard(int index);
 } // namespace Ui
 

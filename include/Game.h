@@ -2,6 +2,7 @@
 #define GAME_H // Prevent this header being included twice in the same source file.
 #include "Simulation.h"
 #include "Demos.h"
+#include "Inspector.h"
 #include "raylib.h"
 enum class Screen { Menu, Select, Help, Playing, Results };
 struct Particle {
@@ -34,8 +35,12 @@ class Game {
 public:
     Simulation simulation;
     Demos demos;
+    Inspector inspector;
     Screen screen = Screen::Menu;
     bool paused = false, showHelp = false;
+    bool briefing = false;
+    float feedbackTime = 0;
+    const char* feedback = "";
     float accumulator = 0, clock = 0, beltClock = 0, titleTimer = 0, comboTimer = 0;
     int comboShown = 1;
     int selectedLevel = 0;
@@ -53,6 +58,7 @@ public:
     Particle particles[Config::ParticleCount]{};
     Game();
     void start(int level);
+    void stepOnce(); // The inspector uses the same logical update as normal play.
     bool run();
 };
 

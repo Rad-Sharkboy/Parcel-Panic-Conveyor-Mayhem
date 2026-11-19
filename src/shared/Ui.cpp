@@ -66,8 +66,12 @@ void Ui::button(const char* label, Rectangle bounds, bool primary) {
     bool hover = CheckCollisionPointRec(GetMousePosition(), bounds);
     box({bounds.x, bounds.y + 3, bounds.width, bounds.height}, Color{9, 16, 23, 255});
     box(bounds, primary ? (hover ? Color{125, 235, 221, 255} : Cyan) : (hover ? Border : Raised));
-    centered(label, bounds, 20, primary ? Background : White, true);
+    int size = 20;
+    while (size > 12 && textWidth(label, size, true) > bounds.width - 18) { size--; }
+    centered(label, bounds, size, primary ? Background : White, true);
 }
+Rectangle Ui::waitingSlot(int index) { return {895 + index * 54.0f, 402, 47, 34}; }
+Rectangle Ui::loadingSlot(int index) { return {895 + index * 65.0f, 282, 58, 46}; }
 void Ui::meter(Rectangle bounds, float ratio, Color tint) {
     box(bounds, Background, 0.9f);
     if (ratio < 0) {

@@ -1,6 +1,8 @@
-# Time and storage costs
+# Time and storage costs — V2
 
 `n` means entries in a structure, `c` means hash-table capacity, `h` means heap capacity, `q` means queue capacity, and `g` means grid cells (187 here). Stack depth is the number of saved changes.
+
+Module 2's min-heap and hash-table work was contributed by [Sabtain](https://github.com/Sabtainn).
 
 - **O(1):** the work does not grow with the number of entries.
 - **O(log n):** follow a path through the heap's tree levels.
@@ -23,6 +25,7 @@
 | Hash clear/reset | O(c) for the cleared/new capacity | O(c) | Clear reuses storage; reset replaces it |
 | Stack push/pop | O(1) | O(1), excluding memory-allocation cost | O(depth) nodes |
 | Stack clear | O(depth) | O(depth) | O(1) extra |
+| Stack `commandAt(depth)` | O(depth) | O(stack size) | O(1) extra; returns a copy without mutation |
 
 The queue never resizes: it rejects an insertion when full. The heap doubles its array when needed. Equal deadlines are ordered by arrival sequence. Heap `clear()` takes O(1) because it only resets the count; its allocated capacity can remain larger than its current size.
 
@@ -57,3 +60,5 @@ All four owning classes free their storage and make deep copies:
 | Stack | O(depth) |
 
 Assignment also frees the object's old storage; for a stack this takes O(old depth). These are manual arrays and linked nodes, with no prebuilt containers replacing the required structures.
+
+The display journal retains at most ten operation records, so insertion and storage are bounded O(1). Inspector hash traces cost O(c) in the worst case; pages display a bounded number of entries. The stack page reads at most six commands with O(depth) traversal per displayed command. Route previews stop at the next junction/dock and are bounded by O(g). These display costs do not change queue/heap/hash/stack operation costs.

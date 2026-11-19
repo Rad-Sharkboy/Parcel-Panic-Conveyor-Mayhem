@@ -64,7 +64,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         shell: pwsh
         run: |
-          # v1.0.0 is displayed as V1; other versions keep their full version number.
+          # Major .0.0 tags display compactly; for example, v2.0.0 becomes V2.
           $version = $env:RELEASE_TAG -replace '^v', '' -replace '\.0\.0$', ''
           $title = "Parcel Panic: Conveyor Mayhem V$version"
           if ($env:RELEASE_TAG -like '*-dev.*') {

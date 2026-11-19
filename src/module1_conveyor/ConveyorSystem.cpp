@@ -5,6 +5,7 @@ void ConveyorSystem::reset(int level) {
         inputs[i].clear();
     }
     history.clear();
+    activity.clear();
     blocked = brakeReady = 0;
 }
 bool ConveyorSystem::switchJunction(int cellIndex, bool planning) {
@@ -14,6 +15,7 @@ bool ConveyorSystem::switchJunction(int cellIndex, bool planning) {
     Cell& cell = layout.cells[cellIndex];
     if (planning) {
         history.push({cellIndex, cell.choice});
+        activity.add(Operation::Push, cellIndex, cell.choice);
     }
     cell.choice = 1 - cell.choice;
     return true;
@@ -24,6 +26,7 @@ bool ConveyorSystem::undo() {
     }
     SwitchCommand command = history.pop();
     layout.cells[command.cell].choice = command.oldChoice;
+    activity.add(Operation::Pop, command.cell, command.oldChoice);
     return true;
 }
 bool ConveyorSystem::brake(int cell, int tick) {
@@ -46,11 +49,13 @@ void ConveyorSystem::feed(HashTable& registry, int tick) {
                 break;
             }
             inputs[i].dequeue();
+            activity.add(Operation::SkipQueued, id, i);
         }
         if (cell.parcel != 0 || cell.brakeUntil > tick || inputs[i].isEmpty()) {
             continue;
         }
         id = inputs[i].dequeue();
+        activity.add(Operation::Dequeue, id, i);
         Parcel* parcel = registry.find(id);
         if (!parcel) {
             continue;

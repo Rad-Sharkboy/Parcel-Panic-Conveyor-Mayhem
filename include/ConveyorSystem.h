@@ -9,6 +9,7 @@ public:
     LevelDefinition layout;
     CircularQueue inputs[Config::MaxInputs];
     CommandStack history;
+    ActivityLog activity;
     int blocked = 0;
     int brakeReady = 0;
     void reset(int level);

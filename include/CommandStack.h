@@ -31,6 +31,8 @@ public:
     SwitchCommand pop();
     void clear();
     int size() const { return count; }
+    // Read a copy for the live inspector. Depth 0 is top; invalid depth is empty.
+    SwitchCommand commandAt(int depth) const;
 };
 
 #endif

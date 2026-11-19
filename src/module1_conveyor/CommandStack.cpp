@@ -13,6 +13,16 @@ bool CommandStack::isEmpty() const {
     return top == nullptr;
 }
 
+SwitchCommand CommandStack::commandAt(int depth) const {
+    if (depth < 0) { return SwitchCommand{}; }
+    const StackNode* current = top;
+    while (current != nullptr && depth > 0) {
+        current = current->next;
+        depth--;
+    }
+    return current ? current->data : SwitchCommand{};
+}
+
 void CommandStack::push(SwitchCommand command) {
     StackNode* temp = new StackNode;
     temp->data = command;

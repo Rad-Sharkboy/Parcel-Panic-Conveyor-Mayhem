@@ -15,7 +15,7 @@ if errorlevel 1 goto missing_compiler
 set "parcel_build_type=Release"
 if /I "%~1"=="Debug" set "parcel_build_type=Debug"
 echo Building Parcel Panic for Windows ^(%parcel_build_type%^) ...
-cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=%parcel_build_type% -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DPARCEL_BUILD_GAME=ON
+cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=%parcel_build_type% -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 if errorlevel 1 goto failed
 cmake --build build --parallel 4
 if errorlevel 1 goto failed

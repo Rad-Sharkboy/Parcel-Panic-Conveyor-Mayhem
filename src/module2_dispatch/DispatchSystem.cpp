@@ -9,6 +9,7 @@ int DispatchSystem::multiplier() const {
 void DispatchSystem::reset() {
     registry.clear();
     ready.clear();
+    activity.clear();
     nextSequence = 0;
     nextLoadTick = 0;
     score = streak = delivered = failed = 0;
@@ -50,6 +51,7 @@ void DispatchSystem::arrive(int id, Destination dock, int tick) {
     }
     parcel->status = ParcelStatus::Ready;
     ready.insert({id, parcel->deadline, nextSequence++});
+    activity.add(Operation::HeapInsert, id, parcel->deadline);
 }
 void DispatchSystem::update(int tick, int interval) {
     for (int i = 0; i < registry.getCapacity(); ++i) {
@@ -66,9 +68,11 @@ void DispatchSystem::update(int tick, int interval) {
     while (ready.extract(entry)) {
         Parcel* parcel = registry.find(entry.id);
         if (!parcel || parcel->status != ParcelStatus::Ready) {
+            activity.add(Operation::SkipReady, entry.id);
             continue;
         }
         parcel->status = ParcelStatus::Dispatched;
+        activity.add(Operation::Dispatch, entry.id, entry.deadline);
         ++delivered;
         ++streak;
         lastPoints =

@@ -2,6 +2,7 @@
 #define DISPATCHSYSTEM_H // Prevent this header being included twice in the same source file.
 #include "HashTable.h"
 #include "MinHeap.h"
+#include "Activity.h"
 class DispatchSystem {
     int nextSequence = 0;
     int nextLoadTick = 0;
@@ -9,6 +10,8 @@ class DispatchSystem {
 public:
     HashTable registry;
     MinHeap ready;
+    ActivityLog activity;
+    int ticksUntilLoad(int tick) const { return tick < nextLoadTick ? nextLoadTick - tick : 0; }
     int score = 0, streak = 0, delivered = 0, failed = 0;
     int lastEventTick = -100, lastEventId = 0, lastPoints = 0;
     // Reset all owned structures, counters and loader timing, O(capacity).

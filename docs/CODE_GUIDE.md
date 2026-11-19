@@ -1,4 +1,4 @@
-# Code guide for class
+# Code guide for class — V2
 
 Use this guide to explain the project's own C++ files. It keeps the full include list and the less familiar syntax in one place. Raylib is an external graphics library downloaded by CMake; its internal code is separate from our custom data structures.
 
@@ -29,7 +29,7 @@ No prebuilt stack, queue, priority queue, vector, list or map implements these s
 | `<cmath>` | `sin`, `cos`, `atan2`, `sqrt`, `fmod` and `round` supply angles, distances, repeating motion and pixel rounding | `Game.cpp`, `Renderer.cpp`, `Screens.cpp`, `Ui.cpp` |
 | `"raylib.h"` | Window, keyboard/mouse, shapes, timing, fonts and text functions | `Game.h`, `Ui.h` |
 
-There is no direct `<iostream>` include because the game has no console input/output. There is no `<climits>` include because it does not use integer-limit macros. Keeping standard math functions avoids writing harder formulas ourselves. Each standard-library include has a purpose comment beside it.
+The game has no console input/output and does not use `<iostream>` or `<climits>`. Keeping standard math functions avoids writing harder formulas ourselves. Each standard-library include has a purpose comment beside it.
 
 Quoted project headers declare **our own** classes, records or settings. They do not provide a ready-made data structure. Including `Game.h`, for example, brings in the game's other headers indirectly. The table below records every direct include in every project `.h` and `.cpp`, excluding downloaded/build files.
 
@@ -42,8 +42,8 @@ Quoted project headers declare **our own** classes, records or settings. They do
 | [include/Config.h](../include/Config.h) | None |
 | [include/ConveyorSystem.h](../include/ConveyorSystem.h) | `"Level.h"`, `"CircularQueue.h"`, `"CommandStack.h"`, `"DispatchSystem.h"` |
 | [include/Demos.h](../include/Demos.h) | `"CircularQueue.h"`, `"MinHeap.h"`, `"HashTable.h"`, `<string>` |
-| [include/DispatchSystem.h](../include/DispatchSystem.h) | `"HashTable.h"`, `"MinHeap.h"` |
-| [include/Game.h](../include/Game.h) | `"Simulation.h"`, `"Demos.h"`, `"raylib.h"` |
+| [include/DispatchSystem.h](../include/DispatchSystem.h) | `"HashTable.h"`, `"MinHeap.h"`, `"Activity.h"` |
+| [include/Game.h](../include/Game.h) | `"Simulation.h"`, `"Demos.h"`, `"Inspector.h"`, `"raylib.h"` |
 | [include/HashTable.h](../include/HashTable.h) | `"Parcel.h"` |
 | [include/Level.h](../include/Level.h) | `"Config.h"`, `"Parcel.h"` |
 | [include/MinHeap.h](../include/MinHeap.h) | `"Config.h"` |
@@ -124,13 +124,13 @@ The game advances logically every 0.22 seconds while drawing targets 60 frames p
 
 Parcel positions interpolate between cell centers: `elapsed / duration` gives travel progress. Junction arrows turn toward their chosen direction, belts keep their scroll offsets, and each outcome creates feedback once. These visual changes do not replace DSA operations.
 
-Tomorrow Medium supplies ordinary labels; SemiBold supplies emphasized and larger text. Both are bundled under the SIL Open Font License 1.1. Fonts load after the Raylib window opens and unload before it closes. Paths start beside the EXE so VS Code and double-click launches find the same files. If a font file is missing, the default Raylib font is available.
+Tomorrow Medium supplies ordinary labels; SemiBold supplies emphasized and larger text. Both are bundled with the game assets. Fonts load after the Raylib window opens and unload before it closes. Paths start beside the EXE so VS Code and double-click launches find the same files. If a font file is missing, the default Raylib font is available.
 
 The 1360 × 765 window uses a Raylib `Camera2D` with a zoom of 1.0625. Layout positions remain based on 1280 × 720. `SetMouseScale` applies the inverse scale to mouse input, and `Ui::clip()` scales clipping rectangles to actual window pixels. These are Raylib graphics functions; the DSA operations and level timings stay the same.
 
 ### Limits and build tools
 
-The shipped levels generate at most 60 parcels. `MaxParcels` uses Level 4's total for fixed visual arrays. If another level's total is raised above that value, raise this bound too. The spawn guard prevents writing past the arrays but would otherwise stop extra arrivals.
+The shipped levels generate at most 60 parcels. `MaxParcels` is the maximum of all four level totals, so increasing an earlier level also expands the fixed visual arrays. Arbitrary board-size changes have not been verified.
 
 Indexed DSA getters assume valid indices; callers stay within size/capacity. There is no custom recovery system for allocation failure or arbitrary malformed levels.
 
@@ -144,9 +144,9 @@ CMake, `build.bat`, VS Code settings and the Windows CI workflow build the progr
 - **F2:** the first six steps insert deadlines 90, 30, 60, 30, 10, 50. #205 becomes the root because its deadline is 10. Later steps extract entries and show stable ordering of equal deadlines.
 - **F3:** IDs 1, 8 and 15 collide in seven buckets. Continue to search, delete #8, search across its tombstone, reuse that bucket and trigger a rehash. The caption reports each actual operation.
 
-## Reading the live sidebar
+## Reading gameplay and the live inspector
 
-The sidebar uses live gameplay data. Its input queue contains only parcels waiting to enter that input, so it often empties quickly. Parcels already on the belt have been dequeued. Q or clicking the queue heading changes the inspected input. Braking an input cell while the game is running can make arrivals wait in its queue.
+The sidebar shows the shared loader and physical waiting line; technical indices are in the I inspector. Both read live gameplay data. Its input queue contains only parcels waiting to enter that input, so it often empties quickly. Parcels already on the belt have been dequeued. Q or clicking the queue heading changes the inspected input. Braking an input cell while the game is running can make arrivals wait in its queue.
 
 Queue slots use the destination color of the actual parcel record. `lastEntered[]` remembers the last ID transferred onto each input belt; it is shown separately as **Last to belt**, never counted as still waiting. H switches between **Help** and **Factory info**.
 
@@ -169,3 +169,15 @@ For example, eight hash records with empty queue/heap buffers is valid: those pa
 4. `main.cpp`, `Game.cpp`, `Renderer.cpp`, `Screens.cpp` and `Ui.cpp`.
 
 Use the demos alongside the source when reviewing these topics. The [report](REPORT.md) records the implementation's origin and the checks completed so far.
+
+## Live inspection additions
+
+The earlier lecture-reference table records the existing project's history. No lecture or lab source files were available for this completion pass; the four existing implementations remained the coding authority. Queue, heap and hash algorithms are unchanged. Stack push/pop/copy are unchanged; `commandAt(depth) const` simply walks nodes and returns a command copy without removing it.
+
+`Inspector.h` forward-declares `Game` so it can declare functions receiving a game reference without a circular header include. `Inspector.cpp` includes `Inspector.h`, `Game.h`, and `Ui.h`. `Activity.h` has no library includes. The V2 source folder keeps the game implementation and build configuration only.
+
+`ActivityLog` is ten display records in a plain array, newest first. Completed operations are recorded by `ConveyorSystem`, `DispatchSystem`, and `Simulation::spawn`, outside the DSA algorithms. It is not a replacement queue or registry. Drawing never adds events. Hash probing is a read-only trace over actual buckets, using the same home index and stop rules as `find`; the Lookup button calls the real const lookup.
+
+`Game::stepOnce()` calls `Simulation::step()` and synchronizes visual records. The inspector's explicit tick button uses this same function. While paused, stepping snaps drawings to their exact logical cells. `Inspector::draw(const Game&)` only reads state. Its stack controls explicitly call real planning switches/undo; ordinary tab switches and page changes do not alter the simulation.
+
+Member 1 should explain `feed`, `move`, `switchJunction`, `undo`, and the queue/stack methods. Member 2 should explain `arrive`, `update`, `findIndex`, `rehash`, and heap insert/extract. Both should trace `spawn -> step -> stepOnce -> syncParcels` and explain why visual positions do not control routing.

@@ -16,7 +16,10 @@ void Game::start(int level) {
         lastEntered[i] = 0;
     }
     screen = Screen::Playing;
-    paused = false;
+    paused = briefing = true;
+    showHelp = false;
+    inspector = Inspector{};
+    feedbackTime = 0;
     demos.mode = 0;
     accumulator = beltClock = comboTimer = 0;
     titleTimer = Config::LevelTitleSeconds;
@@ -74,6 +77,27 @@ void Game::input() {
         }
         return;
     }
+    if (inspector.open) {
+        inspector.input(*this);
+        hoverCell = -1;
+        return;
+    }
+    if ((screen == Screen::Playing || screen == Screen::Results) &&
+        (IsKeyPressed(KEY_I) || Ui::clicked(Ui::InspectorToggle))) {
+        inspector.open = true;
+        paused = true;
+        briefing = false;
+        inspector.selectedId = inspectedParcel;
+        return;
+    }
+    if (briefing && screen == Screen::Playing) {
+        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE) ||
+            Ui::clicked(Ui::BriefingStart)) {
+            briefing = paused = false;
+            titleTimer = 0;
+        }
+        return;
+    }
     if (IsKeyPressed(KEY_H) || Ui::clicked(Ui::InfoToggle)) {
         if (screen == Screen::Menu || screen == Screen::Help) {
             screen = screen == Screen::Menu ? Screen::Help : Screen::Menu;
@@ -125,8 +149,9 @@ void Game::input() {
     if (!showHelp && (IsKeyPressed(KEY_Q) || (inspectedParcel == 0 && Ui::clicked(Ui::QueueLane)))) {
         inspectedLane = (inspectedLane + 1) % simulation.conveyor.layout.inputCount;
     }
-    if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+    if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE) || Ui::clicked(Ui::PauseToggle)) {
         paused = !paused;
+        return;
     }
     if (paused && IsKeyPressed(KEY_Z)) {
         simulation.conveyor.undo();
@@ -134,6 +159,7 @@ void Game::input() {
     if (paused) {
         if (Ui::clicked(Ui::Resume)) {
             paused = false;
+            return;
         } else if (Ui::clicked(Ui::Restart)) {
             start(simulation.level);
             return;
@@ -158,11 +184,31 @@ void Game::input() {
         simulation.conveyor.switchJunction(hoverCell, paused);
     }
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-        simulation.conveyor.brake(hoverCell, simulation.tick);
+        bool braked = simulation.conveyor.brake(hoverCell, simulation.tick);
+        feedback = braked ? "Brake applied. Other lanes keep moving." :
+                   simulation.tick < simulation.conveyor.brakeReady ? "Brake cooling down - watch the timer." :
+                   "Right click a conveyor cell to brake it.";
+        feedbackTime = 3;
     }
 }
+void Game::stepOnce() {
+    simulation.step();
+    syncParcels();
+    if (inspector.open) {
+        // Paused inspection shows exact logical positions instead of half-finished travel.
+        for (int id = 1; id <= simulation.generated; id++) {
+            ParcelMotion& visual = motion[id];
+            visual.position = visual.from = visual.target;
+            visual.elapsed = visual.duration;
+            visual.opacity = visual.status == ParcelStatus::OnConveyor ? 1.0f : 0.0f;
+            visual.outcomePending = false;
+        }
+    }
+    if (simulation.outcome != Outcome::Playing) { screen = Screen::Results; }
+}
 void Game::inspectParcel(float dt) {
-    if (screen != Screen::Playing || demos.mode) {
+    if (inspector.open) { return; }
+    if (screen != Screen::Playing || demos.mode || briefing) {
         inspectedParcel = 0;
         parcelInfoTime = 0;
         return;
@@ -187,6 +233,22 @@ void Game::inspectParcel(float dt) {
             inspectedParcel = id;
             parcelInfoTime = 3;
             break;
+        }
+    }
+    if (!showHelp) {
+        const CircularQueue& queue = simulation.conveyor.inputs[inspectedLane];
+        for (int i = 0; i < queue.size() && i < 6; i++) {
+            if (CheckCollisionPointRec(mouse, Ui::waitingSlot(i))) {
+                inspectedParcel = queue.getSlot((queue.getFront() + i) % queue.getCapacity());
+                parcelInfoTime = 3;
+            }
+        }
+        // Loader tiles use the real heap array; only the root is labeled NEXT.
+        for (int i = 0; i < simulation.dispatch.ready.size() && i < 5; i++) {
+            if (CheckCollisionPointRec(mouse, Ui::loadingSlot(i))) {
+                inspectedParcel = simulation.dispatch.ready.getEntry(i).id;
+                parcelInfoTime = 3;
+            }
         }
     }
 }
@@ -276,6 +338,7 @@ void Game::syncParcels() {
             Vector2 position = Renderer::center(target);
             if (m.targetCell < 0) {
                 m.position = position;
+                m.position.x -= 24; // Short admission slide from the input staging rail.
             }
             m.from = m.position;
             m.target = position;
@@ -403,6 +466,7 @@ bool Game::run() {
             dt = Config::MaxFrameDelta;
         }
         clock += dt;
+        if (feedbackTime > 0) { feedbackTime -= dt; }
         input();
         turnJunctions(dt);
         float remaining = dt;
@@ -418,11 +482,7 @@ bool Game::run() {
             remaining -= slice;
             if (accumulator >= Config::TickSeconds) {
                 accumulator = 0;
-                simulation.step();
-                syncParcels();
-                if (simulation.outcome != Outcome::Playing) {
-                    screen = Screen::Results;
-                }
+                stepOnce();
             }
         }
         if (remaining > 0) {

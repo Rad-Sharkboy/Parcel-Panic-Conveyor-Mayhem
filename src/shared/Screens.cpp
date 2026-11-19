@@ -36,8 +36,8 @@ void miniature(const LevelDefinition& level, Rectangle bounds) {
 }
 void titleFactory(float clock) {
     box({510, 98, 685, 518}, Panel, 0.08f);
-    text("A small factory. A very busy shift.", 550, 133, 28);
-    text("Match the labels. Keep the parcels moving.", 550, 179, 20, Muted);
+    text("Your warehouse. Four busy shifts.", 550, 133, 28);
+    text("Sort by color. The shared loader handles urgency.", 550, 179, 20, Muted);
     clip({530, 230, 645, 210});
     // An illustrative loop; no independent gameplay or advanced effects.
     DrawLineEx({545, 348}, {1165, 348}, 66, Border);
@@ -57,7 +57,7 @@ void titleFactory(float clock) {
         parcel({x, 348}, (Destination)(i % 3), ParcelKind::Normal, 1, 1.6f);
     }
     EndScissorMode();
-    const char* labels[3] = {"Route the right color", "Protect fragile freight", "Build delivery combos"};
+    const char* labels[3] = {"Route to the matching dock", "Protect fragile freight", "Keep the shared loader supplied"};
     for (int i = 0; i < 3; ++i) {
         box({550, 454 + i * 43.0f, 25, 25}, i == 1 ? Gold : Cyan);
         centered(TextFormat("%i", i + 1), {550, 454 + i * 43.0f, 25, 25}, 16, Background, true);
@@ -76,7 +76,7 @@ void Renderer::menu(const Game& g) {
         button("How to play", Help);
         button("Quit", Quit);
         titleFactory(g.clock);
-        text("Four shifts. Queues, heaps, hashing and a little panic.", 550, 633, 17, Muted);
+        text("Play the factory. Open I during a shift to inspect the real DSA.", 550, 633, 16, Muted);
     } else if (g.screen == Screen::Select) {
         text("Choose your shift", 70, 75, 44);
         text("Start anywhere. Each floor has its own routing challenge.", 73, 143, 22, Muted);
@@ -89,6 +89,8 @@ void Renderer::menu(const Game& g) {
             bool hover = CheckCollisionPointRec(GetMousePosition(), card);
             box(card, hover ? Raised : Panel, 0.08f);
             text(TextFormat("SHIFT %02i", i + 1), card.x + 20, card.y + 17, 14, Cyan, true);
+            const char* pace[4] = {"LEARN", "ROUTE", "PROTECT", "MASTER"};
+            text(pace[i], card.x + 181, card.y + 17, 13, Gold, true);
             text(level.name, card.x + 20, card.y + 43, 25);
             miniature(level, {card.x + 20, card.y + 89, 235, 138});
             text(lessons[i], card.x + 20, card.y + 235, 16, White);
@@ -100,15 +102,16 @@ void Renderer::menu(const Game& g) {
     } else if (g.screen == Screen::Help) {
         text("A quick guide to the factory", 70, 59, 40);
         text("Match parcel letters to docks, then let the shared loader ship them.", 73, 116, 21, Muted);
-        const char* keys[10] = {"Left click", "Right click", "Space / Esc", "Z (paused)", "H",
-                                "R / F5",     "F1",          "F2",          "F3",         "F4 / Shift+F4"};
-        const char* actions[10] = {"Switch a cyan junction",      "Brake a belt cell temporarily",
+        const char* keys[11] = {"Left click", "Right click", "Space / Esc", "Z (paused)", "H",
+                                "R / F5", "I / Tab", "F1", "F2", "F3", "F4 / Shift+F4"};
+        const char* actions[11] = {"Switch a cyan junction",      "Brake a belt cell temporarily",
                                    "Pause, plan and resume",      "Undo the last junction change",
                                    "Help / factory info",         "Restart this level",
+                                   "Live inspector / next inspector tab",
                                    "Circular queue demo",         "Deadline min-heap demo",
                                    "Hash table and probing demo", "Next / previous level"};
-        for (int i = 0; i < 10; ++i) {
-            float y = 177 + i * 38.0f;
+        for (int i = 0; i < 11; ++i) {
+            float y = 177 + i * 35.0f;
             text(keys[i], 74, y, 18, Cyan, true);
             text(actions[i], 265, y, 18, White);
         }
@@ -152,9 +155,14 @@ void Renderer::results(const Game& g) {
     text(TextFormat("Delivered %i   /   Failed %i", g.simulation.dispatch.delivered,
                     g.simulation.dispatch.failed),
          652, 328, 18, White);
+    const Config::LevelTuning& tuning = g.simulation.conveyor.layout.tuning;
+    meter({393, 362, 220, 5}, (float)g.simulation.dispatch.score / tuning.target, Gold);
+    meter({652, 362, 220, 5}, (float)g.simulation.dispatch.delivered / tuning.quota, Cyan);
     text(won                                    ? "Quota and score target reached. Ready for the next shift?"
-         : g.simulation.jam >= Config::JamLimit ? "The belts jammed. Try braking one input lane."
-                                                : "Try again: match the docks and watch the deadlines.",
+         : g.simulation.jam >= Config::JamLimit ? "Belts jammed. Stagger merging lanes with a short brake."
+         : g.simulation.tick >= Config::MaxLevelTicks ? "Shift timed out. Keep arrivals and docks moving."
+         : g.simulation.dispatch.delivered < tuning.quota ? "Delivery quota missed. Follow the dock letters."
+                                                        : "Score target missed. Protect your delivery combo.",
          393, 386, 17, Gold);
     button("Retry  /  F5", Retry);
     button("Next shift  /  F4", Next, true);

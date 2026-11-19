@@ -1,4 +1,4 @@
-# How the game fits together
+# How the game fits together — V2
 
 ## Three modules
 
@@ -9,6 +9,10 @@
 | Shared Game and Presentation | `src/shared`, `src/main.cpp` | Four level layouts, simulation timing, input, menus, animation and DSA demos |
 
 `Simulation` brings the first two modules together. `Game` handles the window, input and timing; `Renderer` reads the state to draw it. The `parcel_core` build target contains the game logic and DSA demos and does not need Raylib.
+
+[Sabtain](https://github.com/Sabtainn) contributed Module 2, Parcel Tracking and Dispatch, and shared responsibility for Module 3, Game Integration and Presentation.
+
+`Game::stepOnce()` serves both normal play and the live inspector's explicit tick button. `Inspector` owns view selections/pages/search input only; its const drawing method reads the actual queues, heap, registry and stack. The three gameplay systems record completed operations in bounded ten-entry `ActivityLog` arrays, outside the four DSA algorithms. Drawing never adds events.
 
 ## Follow one parcel
 
@@ -62,6 +66,8 @@ Each parcel's status change produces feedback once. Its `eventCell` and `pointsA
 
 Pause and F1–F3 demos freeze the live simulation, parcels, belts, deadlines, rushes, cooldowns and world effects. Paused junction clicks and Z undo still update the junction arrow. The next simulation tick clears the undo stack, so it cannot rewind past parcel movement.
 
+Shifts begin with a skippable briefing. I opens live inspection and pauses; closing it keeps planning paused. Enter advances an actual tick, including deadlines and clearing history. Explicit stack-tab switches and undo use the real conveyor. `commandAt(depth) const` walks linked nodes and returns a command copy without popping it.
+
 `Simulation::load()` resets the level's structures, counters, score, jam, time and outcome. The game also clears motion records, effects and animation timers. F4/Shift+F4, F5/R, Retry and level cards all use this reset path. Skipping wraps between the four levels, discards the old run and awards no victory. High scores are not saved between runs.
 
 ## Window scale and input
@@ -75,8 +81,9 @@ The layout uses 1280 × 720 coordinates and is displayed at **1360 × 765**. `Co
 - `Renderer.cpp` draws the factory and sidebar.
 - `Screens.cpp` draws menus, level previews, results and demos.
 - `Ui.cpp` supplies shared button rectangles, drawing helpers and font loading.
+- `Inspector.cpp` draws paged slots, a heap tree/array, real bucket lookup traces and linked-stack history. Finished gameplay records remain searchable; F3 supplies the labeled deletion/collision example.
 
-Graphics use Raylib rectangles, lines, circles and basic maths. There are no extra shader, physics or animation libraries. Tomorrow Medium and SemiBold fonts and their license are included in `assets/fonts`; CMake copies them beside the EXE. Paths are based on the EXE's location so double-clicking and launching through VS Code find the same files. Fonts load after the window opens and unload before it closes. No separate art or audio download is needed.
+Graphics use Raylib rectangles, lines, circles and basic maths. There are no extra shader, physics or animation libraries. Tomorrow Medium and SemiBold fonts are included in `assets/fonts`; CMake copies them beside the EXE. Paths are based on the EXE's location so double-clicking and launching through VS Code find the same files. Fonts load after the window opens and unload before it closes. No separate art or audio download is needed.
 
 ## Class reference
 
@@ -155,6 +162,8 @@ The hash table owns parcel records. Queues and heap entries store only IDs. **ID
 | `Ui` | Drawing helpers and button rectangles shared by input and rendering. `loadFonts()` runs after window creation; `unloadFonts()` runs before closing. |
 
 `inspectedLane` selects the live input queue. `lastEntered[]` remembers actual input-to-belt transfers separately from waiting queue contents. `showHelp` selects Help instead of Factory info.
+
+The ordinary sidebar emphasizes the shared loading bay and front-first input staging. Its countdown comes from `ticksUntilLoad`; tiles look up actual records. Only the heap root is labeled next. Technical indices live in the inspector. Hover route previews walk each branch until its next junction/dock, bounded by the number of cells, without introducing gameplay pathfinding.
 
 `Game::inspectParcel(dt)` checks the mouse against drawn parcel positions and keeps an ID plus a three-second display timer. `Renderer::parcelInfo` looks up that ID for the fixed sidebar card.
 

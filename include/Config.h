@@ -47,6 +47,10 @@ const int FragilePeriod = 5;
 const int FragileOffset = 2;
 const int ExpressPeriod = 4;
 const int ExpressOffset = 1;
+// Level 3 teaches each new badge after a few ordinary parcels. Level 4 uses all types.
+const int TeachFragileAfter = 4;
+const int TeachExpressAfter = 12;
+const int TeachDamagedAfter = 20;
 const int MaxLevelTicks = 1800;
 const int DemoCapacity = 6;
 const int ParticleCount = 80;
@@ -67,12 +71,14 @@ const int Level1Parcels = 20;
 const int Level2Parcels = 38;
 const int Level3Parcels = 48;
 const int Level4Parcels = 60;
-const LevelTuning LevelsTuning[Levels] = {{Level1Parcels, 12, 1200, 12, 3, 4, 2, false, false},
-                                          {Level2Parcels, 23, 2300, 8, 2, 5, 3, false, true},
-                                          {Level3Parcels, 29, 2800, 8, 2, 6, 3, true, true},
-                                          {Level4Parcels, 36, 3600, 6, 2, 8, 3, true, true}};
-// Level 4 has the most parcels; use its total for the visual arrays too.
-const int MaxParcels = Level4Parcels;
+const LevelTuning LevelsTuning[Levels] = {{Level1Parcels, 12, 1200, 12, 3, 6, 2, false, false},
+                                          {Level2Parcels, 23, 2300, 8, 2, 9, 3, false, true},
+                                          {Level3Parcels, 29, 2800, 8, 2, 9, 3, true, true},
+                                          {Level4Parcels, 36, 3600, 6, 2, 7, 3, true, true}};
+// Keep fixed visual arrays large enough when any level's total is changed.
+const int MaxEarlyParcels = Level1Parcels > Level2Parcels ? Level1Parcels : Level2Parcels;
+const int MaxLateParcels = Level3Parcels > Level4Parcels ? Level3Parcels : Level4Parcels;
+const int MaxParcels = MaxEarlyParcels > MaxLateParcels ? MaxEarlyParcels : MaxLateParcels;
 } // namespace Config
 
 #endif

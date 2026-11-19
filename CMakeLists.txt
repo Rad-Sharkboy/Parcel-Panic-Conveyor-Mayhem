@@ -29,6 +29,15 @@ if(PARCEL_BUILD_GAME)
     set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
+    # No .mod music is used. Avoid compiling Raylib 5.5's legacy MOD decoder,
+    # whose whole-header copy triggers GCC 15's stringop-overflow warning.
+    set(CUSTOMIZE_BUILD ON CACHE BOOL "" FORCE)
+    set(SUPPORT_FILEFORMAT_MOD OFF CACHE BOOL "" FORCE)
+    set(SUPPORT_FILEFORMAT_BMP ON CACHE BOOL "" FORCE) # Raylib's Windows clipboard dependency.
+    # Raylib's old minimum is 3.5; use supported policy behavior on CMake 4.
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 4.0 AND NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
+        set(CMAKE_POLICY_VERSION_MINIMUM 3.10)
+    endif()
     if(POLICY CMP0135)
         cmake_policy(SET CMP0135 NEW)
     endif()
@@ -36,8 +45,17 @@ if(PARCEL_BUILD_GAME)
         URL https://codeload.github.com/raysan5/raylib/tar.gz/c1ab645ca298a2801097931d1079b10ff7eb9df8
         URL_HASH SHA256=be3443c3fb97f7cbd18ae3f0ea2a73e6c1486128df33b639dce7e44070fc285d)
     FetchContent_MakeAvailable(raylib)
+    # 5.5's config parser reads both sides of #ifdef. Keep only the branch
+    # matching the GPU-skinning setting, as config.h normally does.
+    get_target_property(parcel_raylib_definitions raylib COMPILE_DEFINITIONS)
+    if(RL_SUPPORT_MESH_GPU_SKINNING)
+        list(REMOVE_ITEM parcel_raylib_definitions "MAX_MESH_VERTEX_BUFFERS=7")
+    else()
+        list(REMOVE_ITEM parcel_raylib_definitions "MAX_MESH_VERTEX_BUFFERS=9")
+    endif()
+    set_property(TARGET raylib PROPERTY COMPILE_DEFINITIONS "${parcel_raylib_definitions}")
     add_executable(parcel_panic src/main.cpp src/shared/Game.cpp src/shared/Renderer.cpp
-        src/shared/Screens.cpp src/shared/Ui.cpp)
+        src/shared/Screens.cpp src/shared/Ui.cpp src/shared/Inspector.cpp)
     target_link_libraries(parcel_panic PRIVATE parcel_core raylib)
     parcel_warnings(parcel_panic)
     if(WIN32)

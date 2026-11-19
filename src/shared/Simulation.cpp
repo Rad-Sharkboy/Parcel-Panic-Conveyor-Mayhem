@@ -41,12 +41,15 @@ bool Simulation::spawn() {
     parcel.id = generated + 1;
     parcel.destination = (Destination)(generated % tuning.colors);
     if (tuning.specials) {
-        if (generated % Config::DamagedPeriod == Config::DamagedOffset) {
+        if ((level != 2 || generated >= Config::TeachDamagedAfter) &&
+            generated % Config::DamagedPeriod == Config::DamagedOffset) {
             parcel.kind = ParcelKind::Damaged;
             parcel.destination = Destination::Recycle;
-        } else if (generated % Config::FragilePeriod == Config::FragileOffset) {
+        } else if ((level != 2 || generated >= Config::TeachFragileAfter) &&
+                   generated % Config::FragilePeriod == Config::FragileOffset) {
             parcel.kind = ParcelKind::Fragile;
-        } else if (generated % Config::ExpressPeriod == Config::ExpressOffset) {
+        } else if ((level != 2 || generated >= Config::TeachExpressAfter) &&
+                   generated % Config::ExpressPeriod == Config::ExpressOffset) {
             parcel.kind = ParcelKind::Express;
         }
     }
@@ -55,8 +58,14 @@ bool Simulation::spawn() {
         parcel.deadline = tick + Config::ExpressDeadlineTicks;
     }
     parcel.status = ParcelStatus::Queued;
+    int oldCapacity = dispatch.registry.getCapacity();
     dispatch.registry.insert(parcel);
+    if (dispatch.registry.getCapacity() != oldCapacity) {
+        dispatch.activity.add(Operation::Rehash, dispatch.registry.getCapacity(), oldCapacity);
+    }
+    dispatch.activity.add(Operation::Register, parcel.id);
     conveyor.inputs[lane].enqueue(parcel.id);
+    conveyor.activity.add(Operation::Enqueue, parcel.id, lane);
     generated++;
     return true;
 }
@@ -66,7 +75,10 @@ void Simulation::step() {
         return;
     }
     tick++;
-    conveyor.history.clear(); // Undo is only for planning, not for past movement.
+    if (!conveyor.history.isEmpty()) {
+        conveyor.activity.add(Operation::ClearUndo, conveyor.history.size());
+        conveyor.history.clear(); // Undo is only for planning, not for past movement.
+    }
     const Config::LevelTuning& tuning = conveyor.layout.tuning;
     if (tick >= nextSpawnTick && generated < tuning.total) {
         if (spawn()) {

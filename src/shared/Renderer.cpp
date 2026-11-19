@@ -108,6 +108,39 @@ void hazard(Vector2 p, float clock) {
     DrawRectangleRec({p.x - 15, p.y + 15 - close, 30, close}, Rail);
     centered("!", {p.x - 10, p.y - 13, 20, 24}, 20, Gold, true);
 }
+void routePreview(const Game& g) {
+    int index = g.hoverCell;
+    if (index < 0 || g.inspector.open || g.briefing || g.demos.mode) { return; }
+    const LevelDefinition& layout = g.simulation.conveyor.layout;
+    const Cell& junction = layout.cells[index];
+    if (junction.kind != CellKind::Junction) { return; }
+    // Walk each branch only as far as the next decision or dock. No pathfinding.
+    for (int branch = 0; branch < 2; branch++) {
+        Color tint = branch == junction.choice ? Cyan : Gold;
+        int current = index, next = junction.next[branch];
+        bool hazardOnRoute = false;
+        for (int steps = 0; steps < Config::Cells && next >= 0 && next < Config::Cells; steps++) {
+            DrawLineEx(Renderer::center(current), Renderer::center(next), 6, Fade(tint, 0.42f));
+            const Cell& cell = layout.cells[next];
+            if (cell.kind == CellKind::Hazard) { hazardOnRoute = true; }
+            if (cell.kind == CellKind::Junction || cell.kind == CellKind::Dock || cell.next[0] < 0) {
+                Vector2 p = Renderer::center(next);
+                const char* label = cell.kind == CellKind::Dock ? TextFormat("%s DOCK", destinationLetter(cell.dock)) :
+                                    hazardOnRoute ? "CRUSHER ROUTE" : "NEXT SWITCH";
+                float width = textWidth(label, 13, true) + 12;
+                float x = p.x - width / 2;
+                if (x < 28) { x = 28; }
+                if (x + width > 838) { x = 838 - width; }
+                float labelY = p.y - 43 - branch * 23.0f;
+                box({x, labelY, width, 20}, Background);
+                centered(label, {x, labelY, width, 20}, 13, tint, true);
+                break;
+            }
+            current = next;
+            next = cell.next[0];
+        }
+    }
+}
 } // namespace
 Vector2 Renderer::center(int cell) {
     return {(float)(Config::BoardX + (cell % Config::Columns) * Config::Tile + Config::Tile / 2),
@@ -126,6 +159,8 @@ void Renderer::background(const Game& g) {
     }
     box(InfoToggle, CheckCollisionPointRec(GetMousePosition(), InfoToggle) ? Border : Raised);
     centered("H Help / info", InfoToggle, 16, Cyan);
+    box(InspectorToggle, g.inspector.open ? Cyan : Raised);
+    centered("I  Live inspector", InspectorToggle, 16, g.inspector.open ? Background : Cyan);
     if (g.screen != Screen::Playing && g.screen != Screen::Results) {
         return;
     }
@@ -148,7 +183,9 @@ void Renderer::background(const Game& g) {
     meter({1020, 61, 146, 9}, (float)(s.jam) / Config::JamLimit,
           s.jam > 60 ? destinationColor(Destination::Red) : Cyan);
     DrawLine(28, 101, 1240, 101, Border);
-    if (g.paused) {
+    if (g.feedbackTime > 0) {
+        text(g.feedback, 29, 110, 16, Gold, true);
+    } else if (g.paused) {
         text("PAUSED", 29, 110, 16, Gold, true);
         text("Plan your junctions. Z undoes the last switch. Space resumes.", 120, 110, 16, White);
     } else if (s.rush() || s.rushWarning()) {
@@ -178,6 +215,7 @@ void Renderer::factory(const Game& g) {
     text(TextFormat("SHIFT %02i  /  %.1f s", s.level + 1, s.tick * Config::TickSeconds), 672, 151, 13, Muted);
     conveyorFrame(layout);
     conveyorMotion(g);
+    routePreview(g);
     for (int i = 0; i < Config::Cells; ++i) {
         const Cell& cell = layout.cells[i];
         if (cell.kind == CellKind::Empty) {
@@ -186,6 +224,8 @@ void Renderer::factory(const Game& g) {
         Vector2 p = center(i);
         if (cell.kind == CellKind::Dock) {
             dock(p, cell.dock);
+            text(cell.dock == Destination::Recycle ? "RECYCLE" : "DOCK", p.x - 21, p.y + 30, 11,
+                 destinationColor(cell.dock), true);
         } else if (cell.kind == CellKind::Hazard) {
             hazard(p, g.beltClock);
         } else if (cell.kind == CellKind::Junction) {
@@ -212,9 +252,20 @@ void Renderer::factory(const Game& g) {
     }
     for (int i = 0; i < layout.inputCount; ++i) {
         Vector2 p = center(layout.inputs[i]);
+        const CircularQueue& waiting = s.conveyor.inputs[i];
         box({p.x - 19, p.y - 39, 38, 18}, Raised);
         centered(TextFormat("IN %i", i + 1), {p.x - 19, p.y - 40, 38, 18}, 12, Cyan, true);
         DrawLineEx({p.x - 19, p.y - 15}, {p.x - 19, p.y + 15}, 4, Cyan);
+        box({p.x + 24, p.y - 40, 91, 19}, Background);
+        for (int item = 0; item < waiting.size() && item < 3; item++) {
+            int id = waiting.getSlot((waiting.getFront() + item) % waiting.getCapacity());
+            const Parcel* queued = s.dispatch.registry.find(id);
+            Rectangle slot{p.x + 27 + item * 28.0f, p.y - 38, 24, 15};
+            box(slot, queued ? destinationColor(queued->destination) : Border);
+            centered(TextFormat("%i", id), slot, 11, Background, true);
+        }
+        if (waiting.isEmpty()) { text("staging clear", p.x + 30, p.y - 37, 11, Muted); }
+        if (waiting.isFull()) { text("FULL", p.x + 121, p.y - 37, 13, Gold, true); }
     }
     for (int i = 0; i < s.dispatch.registry.getCapacity(); ++i) {
         const Bucket& bucket = s.dispatch.registry.getBucket(i);
@@ -279,7 +330,7 @@ void Renderer::factory(const Game& g) {
         box({329, y, width, 42}, Background);
         centered(TextFormat("%ix delivery combo!", g.comboShown), {329, y, width, 42}, 22, Gold);
     }
-    if (g.titleTimer > 0) {
+    if (g.titleTimer > 0 && !g.briefing) {
         float alpha = g.titleTimer * 2;
         if (alpha > 1) {
             alpha = 1;
@@ -293,93 +344,96 @@ void Renderer::factory(const Game& g) {
 void Renderer::dashboard(const Game& g) {
     const Simulation& s = g.simulation;
     const ConveyorSystem& conveyor = s.conveyor;
+    bool inspecting = g.inspectedParcel != 0 && !g.demos.mode && !g.showHelp;
     box({875, 136, 365, 536}, Panel, 0.06f);
-    text(g.showHelp ? "Help" : "Factory info", 895, 155, 24);
-    text(g.showHelp ? "H  Back to factory info" : "H  Help     Q  Change input", 895, 190, 17, Muted);
-    int cooldown = conveyor.brakeReady - s.tick;
-    if (cooldown < 0) {
-        cooldown = 0;
-    }
-    DrawCircle(901, 231, 4, cooldown ? Gold : Cyan);
-    text(cooldown ? TextFormat("Brake ready in %.1f s", cooldown * Config::TickSeconds)
-                  : "Brake ready / right click a belt",
-         915, 220, 17, cooldown ? Gold : Cyan);
-    DrawLine(895, 252, 1219, 252, Border);
-    if (g.inspectedParcel != 0 && !g.demos.mode) {
+    text(inspecting ? "Parcel inspection" : g.showHelp ? "Factory guide" : "Shared loading bay", 895, 154, 25);
+    text(inspecting ? "Move away to return to the loading bay" :
+         g.showHelp ? "H  Return to loading bay" : "All docks share one automatic loader", 895, 188, 16, Muted);
+    // These are alternative views of the same space, never overlapping layers.
+    if (inspecting) {
         parcelInfo(g);
-    } else if (!g.showHelp) {
-        const CircularQueue& queue = conveyor.inputs[g.inspectedLane];
-        text(TextFormat("Input queue %i", g.inspectedLane + 1), 895, 263, 20, White, true);
-        text(TextFormat("%i / %i", queue.size(), queue.getCapacity()), 1172, 265, 18, Cyan);
-        float slotWidth = 324.0f / queue.getCapacity();
-        for (int i = 0; i < queue.getCapacity(); ++i) {
-            Rectangle slot{895 + i * slotWidth, 294, slotWidth - 5, 31};
-            int id = queue.getSlot(i);
-            const Parcel* parcel = s.dispatch.registry.find(id);
-            Color tint = parcel ? destinationColor(parcel->destination) : Background;
-            box(slot, tint);
-            centered(id ? TextFormat("#%i", id) : "-", slot, 18, parcel ? Background : Muted, true);
-            if (i == queue.getFront()) {
-                DrawRectangleRec({slot.x, slot.y + 30, slot.width, 2}, Cyan);
-            }
+    } else if (g.showHelp) {
+        const char* names[4] = {"Red shipping", "Blue shipping", "Yellow shipping", "Recycling / damaged"};
+        for (int i = 0; i < 4; i++) {
+            box({895, 229 + i * 34.0f, 25, 25}, destinationColor((Destination)i));
+            centered(destinationLetter((Destination)i), {895, 229 + i * 34.0f, 25, 25}, 17, Background, true);
+            text(names[i], 933, 231 + i * 34.0f, 17);
         }
-        text(TextFormat("Front %i   Rear %i   (last insert)", queue.getFront(), queue.getRear()), 895, 332,
-             16, Muted);
-        const Parcel* last = s.dispatch.registry.find(g.lastEntered[g.inspectedLane]);
-        text(last ? TextFormat("Last to belt: #%i / %s", last->id, destinationLetter(last->destination))
-                  : "Waiting to feed this input",
-             895, 354, 18, last ? destinationColor(last->destination) : Muted);
+        text("F  Fragile: avoid the crusher", 895, 378, 17, Gold);
+        text("!  Express: shorter delivery deadline", 895, 408, 16, Gold);
+        text("Hover a switch to preview its routes.", 895, 443, 16, Muted);
+        text("Cyan: selected. Gold: alternative.", 895, 466, 16, Muted);
+        if (!g.paused) {
+            text("Right click an input to stagger traffic.", 895, 494, 16, Muted);
+            text("I  Inspect live structures and step time.", 895, 522, 16, Cyan);
+        }
+    } else {
         HeapEntry root;
         bool hasRoot = s.dispatch.ready.peek(root);
-        text("Dispatch heap", 895, 386, 18, White, true);
-        text(TextFormat("%i ready", s.dispatch.ready.size()), 1142, 386, 17, Cyan);
-        text(hasRoot ? TextFormat("Next #%i / deadline %i", root.id, root.deadline)
-                     : "No dock parcels waiting to load",
-             895, 409, 16, Muted);
-        text(TextFormat("Hash table   %i records / %i buckets", s.dispatch.registry.size(),
-                        s.dispatch.registry.getCapacity()),
-             895, 434, 16, Muted);
-        text(conveyor.history.isEmpty()
-                 ? "Undo stack  0 / pause + switch"
-                 : TextFormat("Undo stack   %i changes / Z to undo", conveyor.history.size()),
-             895, 457, 16, Gold);
-    } else {
-        const char* names[4] = {"Red shipping", "Blue shipping", "Yellow shipping", "Recycling / damaged"};
-        for (int i = 0; i < 4; ++i) {
-            Destination destination = (Destination)(i);
-            box({895, 271 + i * 34.0f, 25, 25}, destinationColor(destination));
-            centered(destinationLetter(destination), {895, 271 + i * 34.0f, 25, 25}, 17, Background, true);
-            text(names[i], 933, 273 + i * 34.0f, 17);
+        const Parcel* next = hasRoot ? s.dispatch.registry.find(root.id) : nullptr;
+        int remaining = s.dispatch.ticksUntilLoad(s.tick);
+        text(next && next->status == ParcelStatus::Ready ? TextFormat("NEXT  #%i   /   %s dock", next->id,
+             destinationLetter(next->destination)) : hasRoot ? "Clearing expired entries" : "Waiting for dock arrivals",
+             895, 220, 21, next ? destinationColor(next->destination) : White, true);
+        text(remaining ? TextFormat("Next loading slot in %.1f s", remaining * Config::TickSeconds) :
+                         "Loader ready for the next shipment", 895, 249, 16, Muted);
+        meter({895, 273, 324, 4}, 1.0f - (float)remaining / conveyor.layout.tuning.loaderTicks, Cyan);
+        int waitingCount = 0;
+        for (int i = 0; i < s.dispatch.ready.size(); i++) {
+            const HeapEntry& entry = s.dispatch.ready.getEntry(i);
+            const Parcel* p = s.dispatch.registry.find(entry.id);
+            if (p && p->status == ParcelStatus::Ready) { waitingCount++; }
+            if (i >= 5) { continue; }
+            Rectangle tile = loadingSlot(i);
+            bool valid = p && p->status == ParcelStatus::Ready;
+            box(tile, valid ? destinationColor(p->destination) : Border);
+            centered(TextFormat("#%i", entry.id), {tile.x, tile.y, tile.width, 25}, 18, Background, true);
+            centered(valid ? TextFormat("%.1fs", (entry.deadline - s.tick) * Config::TickSeconds) : "expired",
+                     {tile.x, tile.y + 24, tile.width, 21}, 13, Background);
+            if (i == 0) { DrawRectangleLinesEx(tile, 2, White); }
         }
-        text("F  Fragile: take the safe bypass", 895, 417, 16, Muted);
-        text("!   Express: reach the loader quickly", 895, 444, 16, Muted);
+        text(TextFormat("%i waiting   /   %i shipped", waitingCount, s.dispatch.delivered), 895, 335, 17, Cyan);
+        text(TextFormat("Input %i  /  Q to change", g.inspectedLane + 1), 895, 368, 19, White, true);
+        const CircularQueue& queue = conveyor.inputs[g.inspectedLane];
+        text(TextFormat("%i / %i", queue.size(), queue.getCapacity()), 1154, 370, 17, queue.isFull() ? Gold : Cyan);
+        for (int i = 0; i < 6; i++) {
+            Rectangle tile = waitingSlot(i);
+            int id = i < queue.size() ? queue.getSlot((queue.getFront() + i) % queue.getCapacity()) : 0;
+            const Parcel* p = s.dispatch.registry.find(id);
+            box(tile, p ? destinationColor(p->destination) : Background);
+            centered(id ? TextFormat("#%i", id) : "-", tile, 18, p ? Background : Muted, true);
+            if (i == 0) { DrawRectangleLinesEx(tile, 2, Cyan); }
+        }
+        bool blocked = conveyor.layout.cells[conveyor.layout.inputs[g.inspectedLane]].parcel != 0 ||
+                       conveyor.layout.cells[conveyor.layout.inputs[g.inspectedLane]].brakeUntil > s.tick;
+        text(queue.isFull() ? "FULL / arrivals waiting for space" : queue.size() > 0 && blocked ?
+             "FRONT waits: entry belt is blocked" : "FRONT enters as soon as the belt is free", 895, 443, 15, queue.isFull() ? Gold : Muted);
+        const Parcel* last = s.dispatch.registry.find(g.lastEntered[g.inspectedLane]);
+        text(last ? TextFormat("Last to belt: #%i / %s", last->id, destinationLetter(last->destination)) :
+                    "Last to belt: waiting for first parcel", 895, 464, 16, last ? destinationColor(last->destination) : Muted);
+        if (!g.paused) {
+            const Parcel* event = s.dispatch.registry.find(s.dispatch.lastEventId);
+            text("LAST SHIPMENT", 895, 501, 13, Muted, true);
+            const char* reason = event && event->status == ParcelStatus::Rejected ? "wrong dock" :
+                                 event && event->status == ParcelStatus::Broken ? "fragile hit crusher" :
+                                 event && event->status == ParcelStatus::Expired ? "deadline missed" : "delivered";
+            text(event ? TextFormat("#%i  %s  (%+i)", event->id, reason, event->pointsAwarded) :
+                         "Route a parcel to its matching dock.", 895, 525, 17, event && event->pointsAwarded < 0 ? Gold : Cyan);
+        }
     }
-    if (g.paused) {
+    if (g.paused && !g.briefing) {
         button("Resume", Resume, true);
         button("Restart", Restart);
         button("Main menu", MainMenu);
-    } else {
-        text("UP NEXT", 895, 482, 13, Muted, true);
-        for (int i = 0; i < conveyor.layout.inputCount; ++i) {
-            int id = 0;
-            id = conveyor.inputs[i].peek();
-            bool has = id != -1;
-            const Parcel* p = has ? s.dispatch.registry.find(id) : nullptr;
-            text(TextFormat("IN %i", i + 1), 895, 508 + i * 24.0f, 15, Muted);
-            text(p ? TextFormat("#%i   %s  %s", id, destinationLetter(p->destination),
-                                p->kind == ParcelKind::Fragile   ? "Fragile"
-                                : p->kind == ParcelKind::Express ? "Express"
-                                : p->kind == ParcelKind::Damaged ? "Recycle"
-                                                                 : "Normal")
-                   : "Lane clear",
-                 946, 508 + i * 24.0f, 17, p ? destinationColor(p->destination) : White);
-        }
+        SwitchCommand top = conveyor.history.commandAt(0);
+        if (top.cell >= 0) {
+            text(TextFormat("Z restores cell %i / %i changes", top.cell, conveyor.history.size()), 895, 574, 16, Gold);
+        } else { text("Click a switch to save a planning change.", 895, 574, 15, Gold); }
     }
-    DrawLine(895, 582, 1219, 582, Border);
-    text(g.paused ? "Click switches, then Z to undo." : "Hover a parcel for info. Space pauses.", 895, 595,
-         16, g.paused ? Gold : White);
-    text("F1 / F2 / F3  Step through the DSA demos", 895, 622, 15, Muted);
-    text("F4  Next shift     Shift+F4  Previous", 895, 646, 15, Cyan);
+    int cooldown = conveyor.brakeReady - s.tick;
+    text(cooldown > 0 ? TextFormat("Brake recharges in %.1f s", cooldown * Config::TickSeconds) :
+                       "Brake ready / right click a belt", 895, 599, 16, cooldown > 0 ? Gold : Cyan);
+    button(g.paused ? "Space  /  Resume shift" : "Space  /  Pause and plan", PauseToggle);
 }
 void Renderer::parcelInfo(const Game& g) {
     const Parcel* parcel = g.simulation.dispatch.registry.find(g.inspectedParcel);
@@ -419,8 +473,9 @@ void Renderer::parcelInfo(const Game& g) {
             parcel->kind == ParcelKind::Express ? Config::ExpressDeadlineTicks : Config::DeadlineTicks;
         meter({card.x + 18, card.y + 139, 271, 4}, (float)remaining / lifetime, tint);
     }
-    text("Hover another parcel to inspect it", card.x + 18, card.y + 153, 16, Muted);
-    text("Move away to close after 3 seconds", card.x + 18, card.y + 176, 15, Muted);
+    text(TextFormat("Cell %i  /  deadline tick %i", parcel->cell, parcel->deadline),
+         card.x + 18, card.y + 153, 16, Muted);
+    text("I: live record / move away to close", card.x + 18, card.y + 176, 15, Muted);
 }
 void Renderer::draw(const Game& g) {
     background(g);
@@ -433,6 +488,21 @@ void Renderer::draw(const Game& g) {
     if (g.screen == Screen::Results && !g.demos.mode) {
         results(g);
     }
+    if (g.briefing && g.screen == Screen::Playing && !g.demos.mode) {
+        DrawRectangle(22, 138, 828, 532, Fade(Background, 0.82f));
+        box({155, 238, 575, 310}, Panel, 0.08f);
+        text(TextFormat("SHIFT %02i  /  BRIEFING", g.simulation.level + 1), 187, 260, 16, Cyan, true);
+        text(g.simulation.conveyor.layout.name, 185, 292, 35);
+        const char* lessons[4][3] = {
+            {"Match R and B parcels to their colored docks.", "Left click cyan switches. Hover to preview both routes.", "Space pauses to plan; Z undoes your planning switches."},
+            {"Three inputs now share the central sorting belt.", "Turn red upward, blue downward, yellow straight ahead.", "Watch rush warnings. Right click an input to stagger traffic."},
+            {"F parcels keep their color, but must avoid the crusher.", "Use the upper bypass first, then choose the colored dock.", "Express (!) and damaged (X) parcels arrive later in this shift."},
+            {"Follow the vertical sorter: red, then blue, then yellow.", "X parcels continue to recycling. Keep F parcels off crushers.", "The loader is shared: urgent deadlines ship first."}};
+        for (int i = 0; i < 3; i++) { text(lessons[g.simulation.level][i], 187, 351 + i * 30.0f, 17, i == 0 ? White : Muted); }
+        button("Start shift / Enter   (skip briefing)", BriefingStart, true);
+        text("Goal: reach BOTH the delivery quota and score target.", 187, 520, 16, Gold);
+    }
+    if (g.inspector.open && !g.demos.mode) { g.inspector.draw(g); }
     if (g.demos.mode) {
         demonstration(g);
     }
