@@ -1,11 +1,13 @@
 #include "DispatchSystem.h"
+
 int DispatchSystem::multiplier() const {
-    int result = 1 + streak / Config::ComboStep;
-    if (result > Config::MaxMultiplier) {
-        result = Config::MaxMultiplier;
+    int comboMultiplier = 1 + streak / Config::ComboStep;
+    if (comboMultiplier > Config::MaxMultiplier) {
+        comboMultiplier = Config::MaxMultiplier;
     }
-    return result;
+    return comboMultiplier;
 }
+
 void DispatchSystem::reset() {
     registry.clear();
     ready.clear();
@@ -16,6 +18,7 @@ void DispatchSystem::reset() {
     lastEventTick = -100;
     lastEventId = lastPoints = 0;
 }
+
 void DispatchSystem::fail(int id, ParcelStatus reason, int tick) {
     Parcel* parcel = registry.find(id);
     if (!parcel || terminal(parcel->status)) {
@@ -37,6 +40,7 @@ void DispatchSystem::fail(int id, ParcelStatus reason, int tick) {
     lastEventId = id;
     lastPoints = -Config::PenaltyPoints;
 }
+
 void DispatchSystem::arrive(int id, Destination dock, int tick) {
     Parcel* parcel = registry.find(id);
     if (!parcel || parcel->status != ParcelStatus::OnConveyor) {
@@ -45,6 +49,8 @@ void DispatchSystem::arrive(int id, Destination dock, int tick) {
     parcel->eventCell = parcel->cell;
     parcel->status = ParcelStatus::AtDock;
     parcel->cell = -1;
+
+    // Reject parcel if routed to a mismatched destination dock.
     if (parcel->destination != dock) {
         fail(id, ParcelStatus::Rejected, tick);
         return;
@@ -53,46 +59,73 @@ void DispatchSystem::arrive(int id, Destination dock, int tick) {
     ready.insert({id, parcel->deadline, nextSequence++});
     activity.add(Operation::HeapInsert, id, parcel->deadline);
 }
-void DispatchSystem::update(int tick, int interval) {
-    for (int i = 0; i < registry.getCapacity(); ++i) {
+
+void DispatchSystem::scanExpiredParcels(int tick) {
+    int tableCapacity = registry.getCapacity();
+    for (int i = 0; i < tableCapacity; ++i) {
         const Bucket& bucket = registry.getBucket(i);
-        if (bucket.state == BucketState::Occupied && !terminal(bucket.parcel.status) &&
+        if (bucket.state == BucketState::Occupied &&
+            !terminal(bucket.parcel.status) &&
             tick > bucket.parcel.deadline) {
             fail(bucket.parcel.id, ParcelStatus::Expired, tick);
         }
     }
-    if (tick < nextLoadTick) {
-        return;
+}
+
+void DispatchSystem::applyExpressDeadlineBonus() {
+    int tableCapacity = registry.getCapacity();
+    for (int i = 0; i < tableCapacity; ++i) {
+        const Bucket& bucket = registry.getBucket(i);
+        if (bucket.state == BucketState::Occupied &&
+            (bucket.parcel.status == ParcelStatus::Queued ||
+             bucket.parcel.status == ParcelStatus::OnConveyor)) {
+            Parcel* activeParcel = registry.find(bucket.parcel.id);
+            if (activeParcel != nullptr) {
+                activeParcel->deadline += Config::ExpressBonusTicks;
+            }
+        }
     }
-    HeapEntry entry;
-    while (ready.extract(entry)) {
-        Parcel* parcel = registry.find(entry.id);
+}
+
+void DispatchSystem::dispatchNextReadyParcel(int tick, int interval) {
+    if (interval < 1) {
+        interval = 1;
+    }
+    HeapEntry topEntry;
+    while (ready.extract(topEntry)) {
+        Parcel* parcel = registry.find(topEntry.id);
+        // Lazy deletion check: skip stale heap entries that are no longer Ready.
         if (!parcel || parcel->status != ParcelStatus::Ready) {
-            activity.add(Operation::SkipReady, entry.id);
+            activity.add(Operation::SkipReady, topEntry.id);
             continue;
         }
         parcel->status = ParcelStatus::Dispatched;
-        activity.add(Operation::Dispatch, entry.id, entry.deadline);
+        activity.add(Operation::Dispatch, topEntry.id, topEntry.deadline);
         ++delivered;
         ++streak;
-        lastPoints =
-            (parcel->kind == ParcelKind::Damaged ? Config::RecyclePoints : Config::BasePoints) * multiplier();
+
+        int baseReward = (parcel->kind == ParcelKind::Damaged)
+                             ? Config::RecyclePoints
+                             : Config::BasePoints;
+        lastPoints = baseReward * multiplier();
         parcel->pointsAwarded = lastPoints;
         score += lastPoints;
         lastEventTick = tick;
         lastEventId = parcel->id;
         nextLoadTick = tick + interval;
-        // An express dispatch gives queued/active parcels a small deadline extension.
+
+        // Express dispatches grant a deadline extension to active and queued parcels.
         if (parcel->kind == ParcelKind::Express) {
-            for (int i = 0; i < registry.getCapacity(); ++i) {
-                const Bucket& bucket = registry.getBucket(i);
-                if (bucket.state == BucketState::Occupied &&
-                    (bucket.parcel.status == ParcelStatus::Queued ||
-                     bucket.parcel.status == ParcelStatus::OnConveyor)) {
-                    registry.find(bucket.parcel.id)->deadline += Config::ExpressBonusTicks;
-                }
-            }
+            applyExpressDeadlineBonus();
         }
         break;
     }
+}
+
+void DispatchSystem::update(int tick, int interval) {
+    scanExpiredParcels(tick);
+    if (tick < nextLoadTick) {
+        return;
+    }
+    dispatchNextReadyParcel(tick, interval);
 }
