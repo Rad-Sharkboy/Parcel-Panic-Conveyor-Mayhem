@@ -15,6 +15,8 @@ private:
     int count;
     int capacity;
     bool comesBefore(HeapEntry first, HeapEntry second) const;
+    void siftUp(int index);
+    void siftDown(int index);
 
 public:
     MinHeap(int capacity = Config::HeapCapacity);
