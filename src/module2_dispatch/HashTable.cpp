@@ -1,10 +1,10 @@
 #include "HashTable.h"
 
-HashTable::HashTable(int size) {
-    if (size < 3) {
-        size = 3;
+HashTable::HashTable(int initialCapacity) {
+    if (initialCapacity < 3) {
+        initialCapacity = 3;
     }
-    capacity = size;
+    capacity = initialCapacity;
     count = 0;
     deletedCount = 0;
     buckets = new Bucket[capacity];
@@ -46,41 +46,45 @@ int HashTable::hash(int id) const {
     return id % capacity;
 }
 
+// Open addressing with linear probing: walks past Tombstone buckets until Empty or matching ID.
 int HashTable::findIndex(int id) const {
     if (id <= 0) {
         return -1;
     }
-    int index = hash(id);
-    for (int checked = 0; checked < capacity; checked++) {
-        if (buckets[index].state == BucketState::Empty) {
+    int probeIndex = hash(id);
+    for (int probeSteps = 0; probeSteps < capacity; probeSteps++) {
+        if (buckets[probeIndex].state == BucketState::Empty) {
             return -1;
         }
-        if (buckets[index].state == BucketState::Occupied && buckets[index].parcel.id == id) {
-            return index;
+        if (buckets[probeIndex].state == BucketState::Occupied && buckets[probeIndex].parcel.id == id) {
+            return probeIndex;
         }
-        index = (index + 1) % capacity; // Linear probing: try the next bucket.
+        probeIndex = (probeIndex + 1) % capacity;
     }
     return -1;
 }
 
 Parcel* HashTable::find(int id) {
-    int index = findIndex(id);
-    if (index == -1) {
+    int bucketIndex = findIndex(id);
+    if (bucketIndex == -1) {
         return nullptr;
     }
-    return &buckets[index].parcel;
+    return &buckets[bucketIndex].parcel;
 }
 
-// This version lets read-only drawing code look up a parcel without changing it.
+// Read-only lookup overload used by rendering and inspector views.
 const Parcel* HashTable::find(int id) const {
-    int index = findIndex(id);
-    if (index == -1) {
+    int bucketIndex = findIndex(id);
+    if (bucketIndex == -1) {
         return nullptr;
     }
-    return &buckets[index].parcel;
+    return &buckets[bucketIndex].parcel;
 }
 
 void HashTable::rehash(int newCapacity) {
+    if (newCapacity < 3) {
+        newCapacity = 3;
+    }
     Bucket* oldBuckets = buckets;
     int oldCapacity = capacity;
     buckets = new Bucket[newCapacity];
@@ -88,7 +92,7 @@ void HashTable::rehash(int newCapacity) {
     count = 0;
     deletedCount = 0;
 
-    // Changing capacity changes id % capacity, so insert each live record again.
+    // Re-insert only live occupied records so tombstones are cleared out.
     for (int i = 0; i < oldCapacity; i++) {
         if (oldBuckets[i].state == BucketState::Occupied) {
             insert(oldBuckets[i].parcel);
@@ -101,37 +105,37 @@ bool HashTable::insert(const Parcel& parcel) {
     if (parcel.id <= 0) {
         return false;
     }
-    int existing = findIndex(parcel.id);
-    if (existing != -1) {
-        buckets[existing].parcel = parcel;
+    int existingIndex = findIndex(parcel.id);
+    if (existingIndex != -1) {
+        buckets[existingIndex].parcel = parcel;
         return true;
     }
 
-    // Grow before 70% of slots are used/deleted, keeping probe chains short.
-    int usedSlots = count + deletedCount + 1;
-    if (usedSlots * 10 >= capacity * 7) {
+    // Rehash when active + tombstone entries reach 70% load factor to keep probe chains short.
+    int occupiedSlots = count + deletedCount + 1;
+    if (occupiedSlots * 10 >= capacity * 7) {
         rehash(capacity * 2 + 1);
     }
-    int index = hash(parcel.id);
-    while (buckets[index].state == BucketState::Occupied) {
-        index = (index + 1) % capacity;
+    int insertIndex = hash(parcel.id);
+    while (buckets[insertIndex].state == BucketState::Occupied) {
+        insertIndex = (insertIndex + 1) % capacity;
     }
-    if (buckets[index].state == BucketState::Tombstone) {
+    if (buckets[insertIndex].state == BucketState::Tombstone) {
         deletedCount--;
     }
-    buckets[index].parcel = parcel;
-    buckets[index].state = BucketState::Occupied;
+    buckets[insertIndex].parcel = parcel;
+    buckets[insertIndex].state = BucketState::Occupied;
     count++;
     return true;
 }
 
 bool HashTable::erase(int id) {
-    int index = findIndex(id);
-    if (index == -1) {
+    int targetIndex = findIndex(id);
+    if (targetIndex == -1) {
         return false;
     }
-    // An empty slot would hide later colliding IDs; a tombstone means 'keep looking'.
-    buckets[index].state = BucketState::Tombstone;
+    // Mark as Tombstone instead of Empty so subsequent probe sequences remain intact.
+    buckets[targetIndex].state = BucketState::Tombstone;
     count--;
     deletedCount++;
     return true;
@@ -145,12 +149,12 @@ void HashTable::clear() {
     deletedCount = 0;
 }
 
-void HashTable::reset(int size) {
-    if (size < 3) {
-        size = 3;
+void HashTable::reset(int newSize) {
+    if (newSize < 3) {
+        newSize = 3;
     }
     delete[] buckets;
-    capacity = size;
+    capacity = newSize;
     buckets = new Bucket[capacity];
     count = 0;
     deletedCount = 0;
