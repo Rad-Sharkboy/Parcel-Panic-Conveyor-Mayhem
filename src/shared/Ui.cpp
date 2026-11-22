@@ -5,11 +5,13 @@
 namespace {
 Font fonts[4]{};
 bool loaded[4]{};
+
 Font fontFor(int size, bool bold) {
     int index = size > 36 ? 3 : size > 20 ? 2 : bold ? 1 : 0;
     return loaded[index] ? fonts[index] : GetFontDefault();
 }
 } // namespace
+
 void Ui::loadFonts() {
     const int sizes[4] = {20, 20, 32, 72};
     for (int i = 0; i < 4; ++i) {
@@ -30,6 +32,7 @@ void Ui::loadFonts() {
         }
     }
 }
+
 void Ui::unloadFonts() {
     for (int i = 0; i < 4; ++i) {
         if (loaded[i]) {
@@ -38,40 +41,66 @@ void Ui::unloadFonts() {
         loaded[i] = false;
     }
 }
+
 bool Ui::fontsReady() {
     return loaded[0] && loaded[1] && loaded[2] && loaded[3];
 }
+
 float Ui::textWidth(const char* label, int size, bool bold) {
+    if (!label) {
+        return 0.0f;
+    }
     return MeasureTextEx(fontFor(size, bold), label, (float)(size), 0).x;
 }
+
 void Ui::text(const char* label, float x, float y, int size, Color tint, bool bold) {
+    if (!label) {
+        return;
+    }
     DrawTextEx(fontFor(size, bold), label, {std::round(x), std::round(y)}, (float)(size), 0, tint);
 }
+
 void Ui::centered(const char* label, Rectangle bounds, int size, Color tint, bool bold) {
+    if (!label) {
+        return;
+    }
     text(label, bounds.x + (bounds.width - textWidth(label, size, bold)) / 2,
          bounds.y + (bounds.height - size) / 2 - 1, size, tint, bold);
 }
+
 void Ui::box(Rectangle bounds, Color tint, float roundness) {
     DrawRectangleRounded(bounds, roundness, 6, tint);
 }
+
 void Ui::clip(Rectangle bounds) {
     // Raylib clipping uses window pixels, while drawing uses our original layout coordinates.
     BeginScissorMode((int)(bounds.x * Config::WindowScale), (int)(bounds.y * Config::WindowScale),
                      (int)(bounds.width * Config::WindowScale), (int)(bounds.height * Config::WindowScale));
 }
+
 bool Ui::clicked(Rectangle bounds) {
     return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), bounds);
 }
+
 void Ui::button(const char* label, Rectangle bounds, bool primary) {
     bool hover = CheckCollisionPointRec(GetMousePosition(), bounds);
     box({bounds.x, bounds.y + 3, bounds.width, bounds.height}, Color{9, 16, 23, 255});
     box(bounds, primary ? (hover ? Color{125, 235, 221, 255} : Cyan) : (hover ? Border : Raised));
     int size = 20;
-    while (size > 12 && textWidth(label, size, true) > bounds.width - 18) { size--; }
+    while (size > 12 && textWidth(label, size, true) > bounds.width - 18) {
+        size--;
+    }
     centered(label, bounds, size, primary ? Background : White, true);
 }
-Rectangle Ui::waitingSlot(int index) { return {895 + index * 54.0f, 402, 47, 34}; }
-Rectangle Ui::loadingSlot(int index) { return {895 + index * 65.0f, 282, 58, 46}; }
+
+Rectangle Ui::waitingSlot(int index) {
+    return {895 + index * 54.0f, 402, 47, 34};
+}
+
+Rectangle Ui::loadingSlot(int index) {
+    return {895 + index * 65.0f, 282, 58, 46};
+}
+
 void Ui::meter(Rectangle bounds, float ratio, Color tint) {
     box(bounds, Background, 0.9f);
     if (ratio < 0) {
@@ -88,6 +117,7 @@ void Ui::meter(Rectangle bounds, float ratio, Color tint) {
         box({bounds.x, bounds.y, fillWidth, bounds.height}, tint, 0.9f);
     }
 }
+
 void Ui::arrow(Vector2 position, float angle, float size, Color tint) {
     Vector2 direction{std::cos(angle), std::sin(angle)};
     Vector2 tip{position.x + direction.x * size, position.y + direction.y * size};
@@ -99,6 +129,7 @@ void Ui::arrow(Vector2 position, float angle, float size, Color tint) {
     DrawLineEx(left, tip, stroke, tint);
     DrawLineEx(right, tip, stroke, tint);
 }
+
 Color Ui::destinationColor(Destination destination) {
     switch (destination) {
     case Destination::Red:
@@ -112,12 +143,15 @@ Color Ui::destinationColor(Destination destination) {
     }
     return White;
 }
+
 const char* Ui::destinationLetter(Destination destination) {
     return destination == Destination::Red      ? "R"
            : destination == Destination::Blue   ? "B"
            : destination == Destination::Yellow ? "Y"
                                                 : "X";
 }
+
+// Render stylized parcel crate with destination color tag and special-type badge.
 void Ui::parcel(Vector2 p, Destination destination, ParcelKind kind, float opacity, float scale) {
     float width = 32 * scale, height = 30 * scale;
     box({p.x - width / 2 + 2, p.y - height / 2 + 5, width, height}, Fade(BLACK, opacity * 0.3f));
@@ -139,6 +173,7 @@ void Ui::parcel(Vector2 p, Destination destination, ParcelKind kind, float opaci
         DrawLineEx({p.x - 8 * scale, p.y - 6 * scale}, {p.x - 12 * scale, p.y}, 2, Fade(Background, opacity));
     }
 }
+
 Rectangle Ui::levelCard(int index) {
     return {70.0f + index * 295, 245, 275, 320};
 }
