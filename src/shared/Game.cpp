@@ -6,6 +6,7 @@
 Game::Game() {
     simulation.load(0);
 }
+
 void Game::start(int level) {
     simulation.load(level);
     selectedLevel = simulation.level;
@@ -25,6 +26,7 @@ void Game::start(int level) {
     titleTimer = Config::LevelTitleSeconds;
     comboShown = 1;
     hoverCell = -1;
+
     for (int i = 0; i < Config::Cells; ++i) {
         junctionPulse[i] = 0;
         beltOffset[i][0] = beltOffset[i][1] = 0;
@@ -46,6 +48,7 @@ void Game::start(int level) {
         particles[i] = Particle{};
     }
 }
+
 void Game::input() {
     bool shift = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
     if (IsKeyPressed(KEY_F4)) {
@@ -168,6 +171,7 @@ void Game::input() {
             return;
         }
     }
+
     // The info card is a UI surface; clicking it must not switch a belt behind it.
     if (inspectedParcel != 0 && CheckCollisionPointRec(GetMousePosition(), Ui::ParcelInfo)) {
         hoverCell = -1;
@@ -191,6 +195,7 @@ void Game::input() {
         feedbackTime = 3;
     }
 }
+
 void Game::stepOnce() {
     simulation.step();
     syncParcels();
@@ -204,10 +209,15 @@ void Game::stepOnce() {
             visual.outcomePending = false;
         }
     }
-    if (simulation.outcome != Outcome::Playing) { screen = Screen::Results; }
+    if (simulation.outcome != Outcome::Playing) {
+        screen = Screen::Results;
+    }
 }
+
 void Game::inspectParcel(float dt) {
-    if (inspector.open) { return; }
+    if (inspector.open) {
+        return;
+    }
     if (screen != Screen::Playing || demos.mode || briefing) {
         inspectedParcel = 0;
         parcelInfoTime = 0;
@@ -222,6 +232,8 @@ void Game::inspectParcel(float dt) {
     if (parcelInfoTime <= 0) {
         inspectedParcel = 0;
     }
+
+    // 1. Inspect active parcels moving on the conveyor board.
     for (int id = 1; id <= simulation.generated; id++) {
         const ParcelMotion& visual = motion[id];
         if (visual.status != ParcelStatus::OnConveyor || visual.opacity < 0.25f) {
@@ -235,6 +247,8 @@ void Game::inspectParcel(float dt) {
             break;
         }
     }
+
+    // 2. Inspect parcels queued in the active input CircularQueue or dispatch MinHeap.
     if (!showHelp) {
         const CircularQueue& queue = simulation.conveyor.inputs[inspectedLane];
         for (int i = 0; i < queue.size() && i < 6; i++) {
@@ -252,6 +266,7 @@ void Game::inspectParcel(float dt) {
         }
     }
 }
+
 void Game::turnJunctions(float dt) {
     if (screen != Screen::Playing || demos.mode) {
         return;
@@ -288,7 +303,11 @@ void Game::turnJunctions(float dt) {
         }
     }
 }
+
 void Game::deliveryEffect(const Parcel& parcel) {
+    if (parcel.id <= 0 || parcel.id > Config::MaxParcels) {
+        return;
+    }
     int cell = parcel.eventCell;
     if (cell < 0) {
         cell = simulation.conveyor.layout.inputs[(parcel.id - 1) % simulation.conveyor.layout.inputCount];
@@ -317,6 +336,7 @@ void Game::deliveryEffect(const Parcel& parcel) {
         ++emitted;
     }
 }
+
 void Game::syncParcels() {
     const HashTable& registry = simulation.dispatch.registry;
     for (int i = 0; i < registry.getCapacity(); ++i) {
@@ -325,6 +345,9 @@ void Game::syncParcels() {
             continue;
         }
         const Parcel& parcel = bucket.parcel;
+        if (parcel.id <= 0 || parcel.id > Config::MaxParcels) {
+            continue;
+        }
         ParcelMotion& m = motion[parcel.id];
         if (parcel.status == ParcelStatus::OnConveyor && m.status != ParcelStatus::OnConveyor) {
             for (int lane = 0; lane < simulation.conveyor.layout.inputCount; lane++) {
@@ -365,6 +388,7 @@ void Game::syncParcels() {
     }
     comboShown = multiplier;
 }
+
 void Game::effects(float dt) {
     bool running = screen == Screen::Playing && !paused && !demos.mode;
     if (!running && !(screen == Screen::Results && !demos.mode)) {
@@ -447,6 +471,7 @@ void Game::effects(float dt) {
         p.velocity.y += 65 * dt;
     }
 }
+
 bool Game::run() {
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow((int)(Config::WindowWidth * Config::WindowScale),
@@ -455,20 +480,25 @@ bool Game::run() {
         return false;
     }
     Ui::loadFonts();
+
     // Scale drawing and mouse input together, so buttons and parcel hover stay aligned.
     Camera2D camera{{0, 0}, {0, 0}, 0, Config::WindowScale};
     SetMouseScale(1.0f / Config::WindowScale, 1.0f / Config::WindowScale);
     SetExitKey(KEY_NULL);
     SetTargetFPS(Config::RenderFPS);
+
     while (!WindowShouldClose() && !quitting) {
         float dt = GetFrameTime(); // Seconds since the last frame.
         if (dt > Config::MaxFrameDelta) {
             dt = Config::MaxFrameDelta;
         }
         clock += dt;
-        if (feedbackTime > 0) { feedbackTime -= dt; }
+        if (feedbackTime > 0) {
+            feedbackTime -= dt;
+        }
         input();
         turnJunctions(dt);
+
         float remaining = dt;
         // Advance animation up to each tick boundary before applying the next move.
         // This avoids a position jump when a frame crosses one or more ticks.
@@ -489,6 +519,7 @@ bool Game::run() {
             effects(remaining);
         }
         inspectParcel(dt);
+
         BeginDrawing();
         BeginMode2D(camera);
         Renderer::draw(*this);
