@@ -4,6 +4,7 @@
 
 using namespace Ui;
 namespace {
+// Render a scaled topological preview of belts, junctions, docks, and hazards for level cards.
 void miniature(const LevelDefinition& level, Rectangle bounds) {
     float tile = bounds.width / Config::Columns;
     if (tile > bounds.height / Config::Rows) {
@@ -34,6 +35,7 @@ void miniature(const LevelDefinition& level, Rectangle bounds) {
         }
     }
 }
+
 void titleFactory(float clock) {
     box({510, 98, 685, 518}, Panel, 0.08f);
     text("Your warehouse. Four busy shifts.", 550, 133, 28);
@@ -57,7 +59,8 @@ void titleFactory(float clock) {
         parcel({x, 348}, (Destination)(i % 3), ParcelKind::Normal, 1, 1.6f);
     }
     EndScissorMode();
-    const char* labels[3] = {"Route to the matching dock", "Protect fragile freight", "Keep the shared loader supplied"};
+    const char* labels[3] = {"Route to the matching dock", "Protect fragile freight",
+                             "Keep the shared loader supplied"};
     for (int i = 0; i < 3; ++i) {
         box({550, 454 + i * 43.0f, 25, 25}, i == 1 ? Gold : Cyan);
         centered(TextFormat("%i", i + 1), {550, 454 + i * 43.0f, 25, 25}, 16, Background, true);
@@ -65,6 +68,7 @@ void titleFactory(float clock) {
     }
 }
 } // namespace
+
 void Renderer::menu(const Game& g) {
     if (g.screen == Screen::Menu) {
         text("THE SORTING SHIFT STARTS HERE", 84, 92, 16, Cyan, true);
@@ -134,6 +138,7 @@ void Renderer::menu(const Game& g) {
         button("Back  /  Esc", Back);
     }
 }
+
 void Renderer::results(const Game& g) {
     DrawRectangle(0, 3, Config::WindowWidth, 679, Fade(Background, 0.88f));
     box({350, 184, 580, 397}, Panel, 0.08f);
@@ -168,6 +173,8 @@ void Renderer::results(const Game& g) {
     button("Next shift  /  F4", Next, true);
     button("Main menu", ResultsMenu);
 }
+
+// Interactive step-by-step sandbox overlays (F1 CircularQueue, F2 MinHeap, F3 HashTable).
 void Renderer::demonstration(const Game& g) {
     const Demos& d = g.demos;
     DrawRectangle(0, 3, Config::WindowWidth, 679, Fade(Background, 0.96f));
@@ -181,6 +188,7 @@ void Renderer::demonstration(const Game& g) {
     button("Close / Esc", DemoClose);
     text("Sample data / game paused", 990, 155, 16, Muted);
     DrawLine(90, 190, 1188, 190, Border);
+
     if (d.mode == 1) {
         const CircularQueue& queue = d.queue;
         text(TextFormat("Size %i / %i     Front %i     Rear %i (last insert)", queue.size(),
@@ -228,9 +236,11 @@ void Renderer::demonstration(const Game& g) {
                           302 + parentDepth * 94.0f};
                 float dx = x - p.x, dy = y - p.y;
                 float length = std::sqrt(dx * dx + dy * dy);
-                dx /= length;
-                dy /= length;
-                DrawLineEx({p.x + dx * 34, p.y + dy * 34}, {x - dx * 34, y - dy * 34}, 2, Border);
+                if (length > 0.001f) {
+                    dx /= length;
+                    dy /= length;
+                    DrawLineEx({p.x + dx * 34, p.y + dy * 34}, {x - dx * 34, y - dy * 34}, 2, Border);
+                }
             }
             DrawCircleV({x, y}, 33, i == 0 ? Color{44, 94, 98, 255} : Raised);
             centered(TextFormat("#%i", heap.getEntry(i).id), {x - 30, y - 25, 60, 28}, 20, White, true);
