@@ -1,5 +1,6 @@
 #ifndef UI_H
 #define UI_H // Prevent this header being included twice in the same source file.
+
 #include "raylib.h"
 #include "Parcel.h"
 
@@ -13,6 +14,8 @@ const Color White{241, 242, 230, 255};
 const Color Muted{165, 183, 196, 255};
 const Color Cyan{89, 214, 203, 255};
 const Color Gold{247, 194, 91, 255};
+
+// Primary screen navigation and modal controls (in virtual 1280x720 coordinates).
 const Rectangle Play{82, 340, 320, 56};
 const Rectangle Select{82, 410, 320, 50};
 const Rectangle Help{82, 474, 320, 50};
@@ -34,6 +37,7 @@ const Rectangle InspectorToggle{656, 686, 170, 28};
 const Rectangle BriefingStart{265, 464, 350, 42};
 const Rectangle PauseToggle{895, 623, 324, 31};
 const Rectangle ParcelInfo{895, 220, 324, 218};
+
 void loadFonts();
 void unloadFonts();
 bool fontsReady();
