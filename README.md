@@ -161,4 +161,5 @@ Match parcel letters to docks: **R**, **B**, **Y**, and **X** for damaged/recycl
 
 ## 🤝 Contributors
 
-- **[@Sabtainn](https://github.com/Sabtainn)** — Module 2 (Parcel Tracking and Dispatch) and shared work on Module 3 (Game Integration and Presentation).
+- **[@Rad-Sharkboy](https://github.com/Rad-Sharkboy)** — Module 1 (Conveyor System: Circular Queue, Linked Stack undo mechanics, core level routing) and shared Engine/Renderer architecture.
+- **[@Sabtainn](https://github.com/Sabtainn)** — Module 2 (Parcel Tracking and Dispatch: Open-Address Hash Table, Deadline Min-Heap, DispatchSystem lifecycle) and shared work on Module 3 (Simulation tick coordination, Live DSA Inspector, and UI/Screen presentation).
