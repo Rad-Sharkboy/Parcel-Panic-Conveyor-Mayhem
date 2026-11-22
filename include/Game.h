@@ -1,15 +1,19 @@
 #ifndef GAME_H
 #define GAME_H // Prevent this header being included twice in the same source file.
+
 #include "Simulation.h"
 #include "Demos.h"
 #include "Inspector.h"
 #include "raylib.h"
+
 enum class Screen { Menu, Select, Help, Playing, Results };
+
 struct Particle {
     Vector2 position{}, velocity{};
     float life = 0;
     Color color{};
 };
+
 // Drawing positions are separate from logical cells, so movement looks smooth.
 struct ParcelMotion {
     Vector2 from{}, position{}, target{};
@@ -18,12 +22,16 @@ struct ParcelMotion {
     ParcelStatus status = ParcelStatus::Created;
     bool outcomePending = false;
 };
+
 struct ScorePopup {
     Vector2 position{};
     float life = 0;
     int points = 0;
 };
+
+// Top-level application controller bridging simulation ticks, DSA inspector, and Raylib presentation.
 class Game {
+private:
     bool quitting = false;
     void input();
     void effects(float dt);
@@ -56,6 +64,7 @@ public:
     ParcelMotion motion[Config::MaxParcels + 1]{};
     ScorePopup popups[Config::PopupCount]{};
     Particle particles[Config::ParticleCount]{};
+
     Game();
     void start(int level);
     void stepOnce(); // The inspector uses the same logical update as normal play.
