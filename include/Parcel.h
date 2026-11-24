@@ -18,7 +18,6 @@ struct Parcel {
     int eventCell = -1;
     int pointsAwarded = 0;
 };
-// inline allows this small shared function to be defined in a header.
 inline bool terminal(ParcelStatus s) {
     return s == ParcelStatus::Dispatched || s == ParcelStatus::Rejected || s == ParcelStatus::Broken ||
            s == ParcelStatus::Expired;
