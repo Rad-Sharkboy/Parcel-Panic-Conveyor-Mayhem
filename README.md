@@ -96,9 +96,9 @@ Press **Ctrl+Shift+B**, or run this in the VS Code terminal:
 
 The script downloads Raylib on the first build, compiles the game and copies the included fonts into `build/assets`. Wait for **“Build complete.”**
 
-The `build` folder is generated: you can delete it at any time and run the script again for a fresh build. The unused MOD music decoder is disabled to avoid the GCC 15 warning from Raylib's `jar_mod.h`; game warnings remain enabled.
+The `build` folder is generated: you can delete it at any time and run the script again for a fresh build.
 
-The Windows workflow builds and packages the game for releases. The local verification harness used during V2 development is intentionally not included in the public source folder.
+The Windows workflow builds and packages the game for releases. 
 
 ### 3. Play
 
