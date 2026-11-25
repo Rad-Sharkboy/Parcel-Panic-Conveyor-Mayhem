@@ -1,4 +1,4 @@
-# Parcel Panic: Conveyor Mayhem — V2
+# Parcel Panic: Conveyor Mayhem — V2.1
 
 ## Download and play
 
@@ -8,25 +8,36 @@
 
 The ZIP contains the game, its required assets and a short controls guide. GitHub's separate **Source code** downloads contain the project files rather than the playable game.
 
-## V2 changelog
+## V2.1 changelog
+
+A minor update focused on development accessibility, code quality, reliability and maintainability.
 
 ### Added
 
-- A shared loading bay showing the next shipment, waiting parcels, loading timing and completed dispatches.
-- Press **I** to inspect your run's queue, min-heap, hash table and undo stack, and step through the shift one tick at a time.
-- Parcel hover cards, junction route previews, input-staging feedback and skippable level briefings.
+- Autonomous Windows setup system (`setup.bat`) for building the project on fresh Windows installations.
+- Automatic detection, installation and configuration of missing development dependencies, including MSYS2, MinGW-w64, GCC, CMake and Raylib.
+- Download integrity verification, dependency reuse, automatic error recovery and adaptive parallel compilation.
+- Detailed diagnostic logging and post-build executable and asset verification.
+- Optional setup modes for debugging, clean builds, toolchain updates and automatic game launching.
 
 ### Improved
 
-- Clearer factory panels and labels, including a dedicated parcel-inspection view that does not overlap the loading bay.
-- Level pacing for rushes, fragile freight, recycling and loader timing across all four levels.
+- Minor source code refinements and internal implementation improvements.
+- Improved code readability, maintainability and overall project consistency.
+- Simplified development environment configuration and first-time setup experience.
 
-The **F1–F3** practice demos cover examples such as queue wraparound, equal deadlines and hash collisions.
+### Build from source
+
+Run **setup.bat** from the project root to automatically prepare the development environment and compile the game.
+
+An internet connection is required for the initial dependency installation. No manual compiler or Raylib installation is required on supported Windows systems.
+
+The existing **build.bat** remains available for developers with an already configured toolchain.
 
 ### Project updates
 
-- Clean Windows build and packaging workflow for the downloadable release.
-- Public V2 source includes the game, documentation and build configuration; the local development verification harness is not included.
+- Retained the automated Windows build, packaging and release workflow.
+- Preserved the existing gameplay experience and core data structure implementations.
 
 ## Contributor
 
