@@ -1,18 +1,15 @@
 #include "CommandStack.h"
 
-CommandStack::CommandStack() {
+CommandStack::CommandStack(){
     top = nullptr;
     count = 0;
 }
 
-CommandStack::~CommandStack() {
-    clear();
-}
+CommandStack::~CommandStack(){ clear(); }
 
-bool CommandStack::isEmpty() const {
-    return top == nullptr;
-}
+bool CommandStack::isEmpty() const { return top == nullptr; }
 
+//Read-Only Traversal, at anywhere.
 SwitchCommand CommandStack::commandAt(int depth) const {
     if (depth < 0) { return SwitchCommand{}; }
     const StackNode* current = top;
