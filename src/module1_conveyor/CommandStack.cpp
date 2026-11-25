@@ -10,6 +10,7 @@ CommandStack::~CommandStack(){ clear(); }
 bool CommandStack::isEmpty() const { return top == nullptr; }
 
 //Read-Only Traversal, at anywhere.
+//used to visualize the undo history in DSA inspector Tab.
 SwitchCommand CommandStack::commandAt(int depth) const {
     if (depth < 0) { return SwitchCommand{}; }
     const StackNode* current = top;
